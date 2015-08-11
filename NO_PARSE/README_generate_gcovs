@@ -1,0 +1,3 @@
+  generate_gcov.py needs to be in Zend folder and it will 
+generate all gcov files for .c and .h and moves all in
+the required path.
