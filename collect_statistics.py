@@ -17,38 +17,6 @@ hmap = {}
 EXPECTED_LIMIT = 40 # limit for branch taken 
 UNEXPECTED_LIMIT = 60 # limit for branch not taken
 
-
-"""
-def applyOnFolder(folder, zend):
-	global FILENAME, FILENAME_OUT
-	FILENAME = folder + "/stats.csv"
-	FILENAME_OUT =  folder + "/stats.output"
-	cstat = Collector()
-	if zend == True:
-		old_path = os.getcwd()
-		os.chdir(folder + "/Zend/GCOVS")
-		all_folders = os.listdir(".")
-		for i in range(len(all_folders)):
-			path = folder + "/Zend/GCOVS/" + all_folders[i] + "/" +all_folders[i] + "_sum_.csv"
-			print "Added " + path
-			cstat.addFile(path)
-		os.chdir(old_path)
-		cstat.writeCSV()
-		cstat.writeOutput()
-
-	elif os.path.isdir(folder):
-		dir_ls = os.listdir(folder)
-		old_path = os.getcwd()
-		os.chdir(folder)
-		for i in range(len(dir_ls)):
-			if dir_ls[i].endswith(".csv") :		
-				cstat.addFile(dir_ls[i])
-		os.chdir(old_path)
-	else:
-		cstat.addFile(folder + ".csv")
-	
-	return cstat
-"""
 class Condition():
 
 	def __init__(self, filename, line, tpe, br0, br1, pr):
@@ -148,11 +116,7 @@ class Collector():
 			self.map[key] = mod_line
 
 	def writeOutput(self):
-		try:
-  			ofile = open(FILENAME_OUT, 'w')
-  		except:
-  			print FILENAME_OUT + " - Write to file: error opening file for write\n"
-  			raise
+
 
 		for key in self.map :
 			s = str(key[0]) + " / Line " + str(key[0]) + ": " + str(self.map[key][0]) + "\n"
@@ -200,6 +164,6 @@ def applyOnFolder(target):
 
 def collect(target):
 	applyOnFolder(target)
-	cstat.writeCSV(target + "/statistics.csv")
+	cstat.writeCSV(target + "/statistici_cica.csv")
 
 #applyOnFolder(sys.argv[1], True)

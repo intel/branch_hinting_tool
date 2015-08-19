@@ -15,3 +15,13 @@ class GlobalVar:
     in_string = False
 
     in_comment = False
+
+    comment = False
+
+    single_operator_begin_line = False
+
+    condition = ""
+
+    weird_condition = False
+
+    simple_condition = False

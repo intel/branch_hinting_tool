@@ -1,3 +1,3 @@
 #!/bin/bash
-python main.py -z /home/GabrielCSMO/devel/php-src/
-sudo chown -R GabrielCSMO ../php-src/
+python main.py /home/GabrielCSMO/devel/php-src/ -z
+#python main.py /home/GabrielCSMO/devel/python/ -z

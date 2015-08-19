@@ -7,6 +7,8 @@ import os
 import instrument
 import generate_csv
 import parse
+import ini
+import constants
 def main():
 	wrongUnexp = False
 	wrongExp = False 
@@ -25,6 +27,8 @@ def main():
 	parser.add_argument('-pc', action='store_true', help='prints only those conditions RIGHT')
 	parser.add_argument('-a',  action='store_true', help='returns output in csv format')
 	parser.add_argument('-d', metavar='PATH', type=str, nargs='?', help='PATH where we put the LCOV RESULTS')
+	parser.add_argument('-i', metavar='PATH_TO_INI_FILE', type=str, nargs='?', help='ini file path')
+
 	args = parser.parse_args()
 
 	collect_statistics.FILENAME = args.filename[0]
@@ -38,34 +42,36 @@ def main():
 	all = args.a
 	zend = args.z
 	lcovPath = args.d
+	iniPath = args.i
+
 	if lowerLimit != None:
 		collect_statistics.EXPECTED_LIMIT = lowerLimit
 
 	if upperLimit != None:
 		collect_statistics.UNEXPECTED_LIMIT = upperLimit
 
-	""" edits and tags branches for all .c
-		.h and .cpp files inside the folder
-		(if filename is a folder path) or
-		edits the file itself
-	"""
-	parse.start(filename, zend)
+	if iniPath != None:
+		constants.DEFAULT_INI_FILE = iniPath
 
-	""" build/ compile the filename or 
+
+	""" edits and tags branches """
+	parse.start(filename)
+
+	""" read the ini file """
+
+
+	""" build/ compile the filename or
 		files contained in the filename(when it's a folder) 
 		using with intstrument.py
-		It generates whole folder hierarchy inside the
-		filename path and stores it into filename/GCOVS/
 	"""
+
 	instrument.instrument(filename, zend, lcovPath)
 
-
 	"""
-		Generate csv file if filename is a file
-		path or generates all csv files for all
-		the files inside directory( if filename
-		is a folder path)
+		Generate csv file/s
 	"""
+	#print filename
+	#print os.system("ls ")
 	if os.path.isdir(filename) :
 		generate_csv.applyOnFolder(filename + "GCOVS")
 
@@ -73,10 +79,7 @@ def main():
 		generate_csv.generate(filename + ".gcov")
 
 	"""
-		Goes in the folder hierarchy and collect
-		all branches info stored in csv files.
-		Stores all info (sum of all csvs) into
-		folder_path/GCOVS/statistics.csv
+		handles the format of output
 	"""
 	collect_statistics.collect(filename + "/GCOVS/")
 	"""

@@ -1,5 +1,8 @@
 import os
-import sys
+import time
+
+import tag_file
+import global_var
 
 """
 Performs tagging on all the files ending in .c and .h from a folder given as argument in command line.
@@ -8,6 +11,52 @@ TmpFolder replace those in the original folder. The TmpFolder will be deleted.
 """
 
 
+def applyOnFolder(target, ofile):
+
+    #print target
+    old_path = os.getcwd()
+    os.chdir(target)
+    dir_ls = os.listdir(".")
+    for item in dir_ls:
+        if os.path.isdir(item):
+            #print target
+            applyOnFolder(target + "/" + item, ofile)
+        elif (item.endswith(".c") or item.endswith(".h")) and item != "data_file.c":
+            global_var.GlobalVar.modified_text = ""
+            #command = "python tag_file.py " + item + " " + item + "_copy"
+            start = time.time()
+            print  "Start on: " + item
+            tag_file.tag(item, item + "_copy")
+            end = time.time()
+            #os.system(command)
+            command = "cp " + item + "_copy " + item
+            os.system(command)
+            command = "rm " + item + "_copy "
+            os.system(command)
+
+            s = target + "/" + item + ", " + str(round(end-start, 2))
+            ofile.write(s)
+            print s
+
+    os.chdir(old_path)
+
+
+def apply(target):
+    try:
+        ofile = open(target + "/parse_time.csv", 'w')
+    except:
+        print "parse_time.csv: error opening file for write\n"
+        raise
+    s = "FILENAME, EXECUTION TIME(s)"
+    ofile.write(s)
+
+    path_input = target
+    if os.path.isdir(path_input):
+        applyOnFolder(path_input, ofile)
+    else:
+        tag_file.tag(path_input, path_input)
+
+"""
 def main():
     path_input = sys.argv[1]
     if os.path.isdir(path_input):
@@ -37,6 +86,6 @@ def main():
         command = 'python' + " " + 'tag_file.py' + " " + path_input + " " + path_input
         os.system(command)
 
-
 if __name__ == '__main__':
     main()
+"""

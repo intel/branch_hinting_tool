@@ -10,15 +10,13 @@ import sys
 """
 
 
-def main():
-    inputfile = sys.argv[1]
-    outputfile = sys.argv[2]
+def tag(input, output):
+    inputfile = input
+    outputfile = output
 
     ApplyFSMFile().run_all(inputfile)
 
     f_tagged = open(outputfile, 'w+')
     f_tagged.write(GlobalVar.modified_text)
 
-
-if __name__ == '__main__':
-    main()
+    f_tagged.close()

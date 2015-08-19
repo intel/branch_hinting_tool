@@ -477,7 +477,10 @@ class Logger:
 			for cond in self.execConditions : 
 				lista = cond.getBranchesTimesExecuted()
 				#print lista[0]
-				line = str(cond.line) + ", " + str(round(cond.getBranches()[0].getProbability(),2)) + ", "  + str(lista[0]) + ", "  + str(lista[1]) + ", " + cond.expected + ", " + str(cond.num_branches) + ", " + cond.type + ", " +  cond.test+"\n"
+				if "branch ||" in cond.test:
+					line = str(cond.line) + ", " + str(round((100.0 - cond.getBranches()[0].getProbability()),2)) + ", "  + str(lista[1]) + ", "  + str(lista[0]) + ", " + cond.expected + ", " + str(cond.num_branches) + ", " + cond.type + ", " +  cond.test+"\n"
+				else:
+					line = str(cond.line) + ", " + str(round(cond.getBranches()[0].getProbability(),2)) + ", "  + str(lista[0]) + ", "  + str(lista[1]) + ", " + cond.expected + ", " + str(cond.num_branches) + ", " + cond.type + ", " +  cond.test+"\n"
 				self.csvFile.write(line)
 
 		except:

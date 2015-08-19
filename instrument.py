@@ -3,18 +3,10 @@
 import os
 import sys
 import generate_gcov
-import oldVersion_generate_gcov
+#import oldVersion_generate_gcov
 FLAGS = ""
 target = ""
 zend_make_script = "autogenerate.py"
-
-""" This method calls the autogenerate script
-	where the .gcda/b and .gcno files are
-	created for profiling.
-	In order to use gcov, you must compile all
-	the sources with --coverage flag or
-	-fprofile-arcs and -ftest-coverage
-"""
 def instrument(target, zend, flags):
 	global FLAGS
 	if flags != "" and flags != None :
@@ -25,6 +17,7 @@ def instrument(target, zend, flags):
 		os.system(command)
 		# aici trebuie sa adaug generate_gcov
 		generate_gcov.generate(target)
+#		oldVersion_generate_gcov.generate(target)
 
 	elif os.path.isdir(target) :
 		dir_ls = os.listdir(target)

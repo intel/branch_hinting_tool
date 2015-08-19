@@ -3,8 +3,19 @@
 import os
 import sys
 import argparse
+import constants
+import ini
+def getRule(name):
+        if name in constants.INI_MAP:
+            return constants.INI_MAP[name]
+        else:
+            return None
+def printRules():
+	for key in constants.INI_MAP:
+		print key + " - " + constants.INI_MAP[key]
 
-
+#IR.toString()
+IR = None
 OLD_opt_flag = "-O2"
 NEW_opt_flag = "-O0"
 OLD_prof_flag = "-fprofile-generate"
@@ -30,13 +41,16 @@ if args.destination != None :
 	DEST = args.destination
 
 if args.path != None :
-	print "wtf"
 	PATH = args.path
 
 if args.numthreads != None :
 	NUM_THREADS = args.numthreads
 
-print "Target file: " + TARGET + "\nPhp folder path: " + PATH + "\nNum Threads: " + str(NUM_THREADS)
+IR = constants.IR
+if IR == None:
+	print "WTF???"
+
+print "Target file: " + TARGET + "\nFolder path: " + PATH + "\nNum Threads: " + str(NUM_THREADS)
 if DEST != None:
 	print "LCOV destination folder: " + DEST
 	command = "rm -r " + DEST + "/lcov_results"
@@ -61,15 +75,16 @@ os.system(command)
 print command
 
 os.system("cp Makefile.copy Makefile")
-
 os.system("make clean")
 
-command = "make prof-gen -j " + str(NUM_THREADS) + " &> /dev/null"
+printRules()
+
+command = IR.getRule("Makefile.RULE") + " -j 8"# + str(NUM_THREADS) + " &> /dev/null"
 os.system(command)
 print command
 
 os.system("pwd")
-command = "./sapi/cgi/php-cgi -T1000 " + TARGET + " &> /dev/null"
+command =  IR.getRule("Config.BINARY")+ " " + IR.getRule("Config.TARGET")# + " &> /dev/null"
 os.system(command)
 print command
 
@@ -86,7 +101,7 @@ if DEST != None :
 os.system("rm Makefile.copy")
 
 
-""" redo initial makefile config """
+""" redo initial makefile config
 command = "sed \"s/" + NEW_opt_flag + "/" + OLD_opt_flag +"/g\"" " \"Makefile\" > Makefile.copy"
 os.system(command)
 print command
@@ -96,7 +111,10 @@ command = "sed \"s/" + NEW_prof_flag + "/" + OLD_prof_flag +"/g\"" " \"Makefile\
 os.system(command)
 print command
 os.system("cp Makefile.copy Makefile")
-
+ """
 if args.r == True :
 	os.system("make clean")
 	os.system("make -j " + str(NUM_THREADS) + " &> /dev/null")
+
+
+IR.toString()

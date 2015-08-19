@@ -1,4 +1,5 @@
 import re
+from itertools import groupby
 from global_var import GlobalVar
 
 """
@@ -16,93 +17,64 @@ Takes a line from a file and tokenizes it according to the function "split", kee
 """
 
 
+# not used stuff
+def token_comment(orig_line, separators):
+    index_begin_comm = orig_line.find("/*")
+    index_end_comm = orig_line.find("*/")
+
+    if index_begin_comm != -1 and index_end_comm != -1:
+        return tokenize_line(orig_line[0:index_begin_comm], separators) + [
+            orig_line[index_begin_comm:index_end_comm]] + tokenize_line(orig_line[index_end_comm:], separators)
+
+    # /*comment
+    # comment
+    # comment*/
+    if index_begin_comm != -1:
+        GlobalVar.comment = True
+        return tokenize_line(orig_line[0:index_begin_comm], separators) + [orig_line[index_begin_comm:]]
+
+    if index_end_comm != -1:
+        # print "sfarsit comentariu"
+        GlobalVar.comment = False
+        return [orig_line[0:index_end_comm]] + tokenize_line(orig_line[index_end_comm:], separators)
+
+    if GlobalVar.comment:
+        return [orig_line]
+
+    # nu se poate face
+
+    # if (orig_line.find("if") == -1 or orig_line.find("while") == -1 or orig_line.find("for") == -1) or orig_line.find("||") == -1 or orig_line.find("&&") == -1:
+    """
+    if "if" not in orig_line or "while" not in orig_line or "&&" not in orig_line or "||" not in orig_line or "for" not in orig_line:
+        return [orig_line]
+    """
+    return tokenize_line(orig_line, separators)
+
+
 def tokenize_line(orig_line, separators):
-    token_list = []
-    index = orig_line.find("\')\'")
-    if index != -1:
-        first_part = orig_line[0: index]
-        last_part = orig_line[index + 3:]
-        return split(first_part, separators) + [orig_line[index:index + 3]] + split(last_part, separators)
 
-    index = orig_line.find("\'(\'")
-    if index != -1:
-        first_part = orig_line[0: index]
-        last_part = orig_line[index + 3:]
-        return split(first_part, separators) + [orig_line[index:index + 3]] + split(last_part, separators)
+    # ')' is found
+    index_close = orig_line.find("\')\'")
+    # '(' is found
+    index_open = orig_line.find("\'(\'")
+    if index_open != -1 or index_close != -1:
+        return false_paren(orig_line, separators)
 
-
+    # begin preprocessor directive
+    # cazul din php_config.h cu #error no suitable type for ssize_t found
     regex = re.compile(r"[ \t]*#[ \t]*[a-z]+")
     if regex.match(orig_line) is not None:
-        string = orig_line[regex.match(orig_line).end() + 1:]
-        token_list = [orig_line[0: regex.match(orig_line).end() + 1]]
-        stripped_line = string.rstrip("\n \t")
-        if stripped_line.endswith("\\"):
-            stripped_line_backslash = stripped_line.rstrip("\\")
-            stripped_line_again = stripped_line_backslash.strip("\n \t(")
-
-            end_token = ""
-            rest = orig_line
-
-            if stripped_line_again[-1] == '&' or stripped_line_again[-1] == '|':
-                #print "se termina cu operator", (stripped_line_again.endswith("&&") or stripped_line_again.endswith("\|\|"))
-                index_list_and = [m.start() for m in re.finditer("&&", orig_line)]
-                index_list_or = [m.start() for m in re.finditer("\|\|", orig_line)]
-                index_list = sorted(index_list_or + index_list_and)
-                index_op = index_list[-1]
-                end_token = orig_line[index_op:]
-                rest = orig_line[0:index_op]
-                #print "separat", split(rest, separators) + [end_token]
-                return token_list + split(rest, separators) + [end_token]
-        return token_list + split(string, separators)
-
-
-    if (orig_line.find("&&") != -1 or orig_line.find("||") != -1) and (not orig_line.endswith("\\\n")):
-        #print "linii care se termina cu endl si au op",orig_line
-        stripped_line = orig_line.strip("\n \t")
-        #if (not stripped_line.endswith("\\")):
-
-        rest = orig_line
-        #if stripped_line.endswith("&&") or stripped_line.endswith("\|\|"):
-        if stripped_line[-1] == '&' or stripped_line[-1] == '|':
-            index_list_and = [m.start() for m in re.finditer("&&", orig_line)]
-            index_list_or = [m.start() for m in re.finditer("\|\|", orig_line)]
-            index_list = sorted(index_list_or + index_list_and)
-            index_op = index_list[-1]
-            end_token = orig_line[index_op:]
-            rest = orig_line[0:index_op]
-            return split(rest, separators) + [end_token]
-
-    if (orig_line.find("&&") != -1 or orig_line.find("||") != -1) and orig_line.endswith("\\\n"):
-        #print "linii care se termina cu backendl si au op",orig_line
-       # if stripped_line.endswith("\\"):
-        stripped_line = orig_line.strip("\n \t")
-        stripped_line_backslash = stripped_line.rstrip("\\")
-        stripped_line_again = stripped_line_backslash.strip("\n \t(")
-
-        end_token = ""
-        rest = orig_line
-
-        if stripped_line_again[-1] == '&' or stripped_line_again[-1] == '|':
-            #print "se termina cu operator", (stripped_line_again.endswith("&&") or stripped_line_again.endswith("\|\|"))
-            index_list_and = [m.start() for m in re.finditer("&&", orig_line)]
-            index_list_or = [m.start() for m in re.finditer("\|\|", orig_line)]
-            index_list = sorted(index_list_or + index_list_and)
-
-            #print index_list , " " , orig_line
-            index_op = index_list[-1]
-            end_token = orig_line[index_op:]
-            rest = orig_line[0:index_op]
-            #print "separat", split(rest, separators) + [end_token]
-            return split(rest, separators) + [end_token]
-
-
+        if orig_line.find("for") == -1:
+            string = orig_line[regex.match(orig_line).end() + 1:]
+            token_list = [orig_line[0: regex.match(orig_line).end() + 1]]
+            return token_list + split(string, separators)
+        else:
+            return [orig_line]
 
     if orig_line.find("//") != -1:
         comment = orig_line[orig_line.find("//"):]
         string = orig_line[0:orig_line.find("//")]
         return split(string, separators) + [comment]
-
-    #print "nada", orig_line
     return split(orig_line, separators)
 
 
@@ -117,11 +89,11 @@ Splits a string into tokens according to the separators, keeping the separators.
 
 
 def split(string, separators):
-    separators.sort(key=len)
+    # separators.sort(key=len)
     i = 0
     token_list = []
-
-    while i < len(string):
+    length = len(string)
+    while i < length:
         separator = ""
         for current in separators:
             if current == string[i:i + len(current)]:
@@ -153,115 +125,137 @@ which retain the type of condition traversed at a certain moment.
 """
 
 
-def tag_condition(token):
+def __tag__(condition, comment_tag, backslash):
+    tagged_condition = ""
+    index_list = get_index_list(condition)
+    binary_op_or = " ||*/"
+    binary_op_and = " &&*/"
+
+    if condition[index_list[0]] == '&':
+        tagged_condition = "".join(
+            [tagged_condition, condition[0: index_list[0]], comment_tag, binary_op_and, backslash])
+    else:
+        tagged_condition = "".join(
+            [tagged_condition, condition[0: index_list[0]], comment_tag, binary_op_or, backslash])
+
+    for i in range(0, len(index_list) - 1):
+        if condition[index_list[i + 1]] == '&':
+            tagged_condition = "".join(
+                [tagged_condition, condition[index_list[i]: index_list[i + 1]], comment_tag, binary_op_and, backslash])
+        else:
+            tagged_condition = "".join(
+                [tagged_condition, condition[index_list[i]: index_list[i + 1]], comment_tag, binary_op_or, backslash])
+    tagged_condition = "".join([tagged_condition, condition[index_list[len(index_list) - 1]: len(condition)]])
+    return tagged_condition
+
+
+def tag(condition):
     if GlobalVar.if_condition:
-        GlobalVar.modified_text += token.strip('\n') + " if branch" + '\n'
+        if GlobalVar.in_preprocessor:
+            return __tag__(condition, "/*if branch", "\\\n")
+        else:
+            return __tag__(condition, "/*if branch", "\n")
     elif GlobalVar.while_condition:
-        GlobalVar.modified_text += token.strip('\n') + " while branch" + '\n'
+        if GlobalVar.in_preprocessor:
+            return __tag__(condition, "/*while branch", "\\\n")
+        else:
+            return __tag__(condition, "/*while branch", "\n")
     elif GlobalVar.for_condition:
-        GlobalVar.modified_text += token.strip('\n') + " for branch" + '\n'
+        if GlobalVar.in_preprocessor:
+            return __tag__(condition, "/*for branch", "\\\n")
+        else:
+            return __tag__(condition, "/*for branch", "\n")
 
 
-def tag_condition_comment(token):
-    if GlobalVar.if_condition:
-        GlobalVar.modified_text += token.strip('\n') + "/*if branch*/" + '\n'
-    elif GlobalVar.while_condition:
-        GlobalVar.modified_text += token.strip('\n') + "/*while branch*/" + '\n'
-    elif GlobalVar.for_condition:
-        GlobalVar.modified_text += token.strip('\n') + "/*for branch*/" + '\n'
+def tag_weird_condition(condition):
+    index_list_endl = [m.start() for m in re.finditer("\n", condition)]
+
+    tagged_condition = ""
+    tagged_condition += condition[0: index_list_endl[0]] + "/*weird condition*/"
+
+    for i in range(0, len(index_list_endl) - 1):
+        tagged_condition += condition[index_list_endl[i]: index_list_endl[i + 1]] + "/*weird condition*/"
+
+    tagged_condition += condition[index_list_endl[len(index_list_endl) - 1]: len(condition)] + "/*weird condition*/"
+    return tagged_condition
 
 
-def tag_condition_operator(token):
-    if GlobalVar.if_condition:
-        GlobalVar.modified_text += "/*if branch*/" + '\\\n' + token
-    elif GlobalVar.while_condition:
-        GlobalVar.modified_text += "/*while branch*/" + '\\\n' + token
-    elif GlobalVar.for_condition:
-        GlobalVar.modified_text += "/*for branch*/" + '\\\n' + token
+def false_paren(line, separators):
+    index_open_paren = [m.start() for m in re.finditer("\'\(\'", line)]
+    index_close_paren = [m.start() for m in re.finditer("\'\)\'", line)]
+    index_paren = sorted(index_open_paren + index_close_paren)
+
+    splitted_line = []
+    splitted_line += split(line[0: index_paren[0]], separators) + [line[index_paren[0]:index_paren[0] + 3]]
+    for i in range(0, len(index_paren) - 1):
+        splitted_line += split(line[index_paren[i] + 3:index_paren[i + 1]], separators) + [line[index_paren[i + 1]:index_paren[i + 1] + 3]]
+    splitted_line += split(line[index_paren[len(index_paren) - 1] +3:], separators)
+    return splitted_line
 
 
-def tag_condition_last_operator_no_backslash_in_preprocessor(token):
-    index_and = token.find("&&")
-    index_or = token.find("||")
-    if index_and != -1:
-        if GlobalVar.if_condition:
+def get_index_list(condition):
+    index_list_quotes = [m.start() for m in re.finditer('"', condition)]
 
-            GlobalVar.modified_text += token[0:index_and]+ "/*if branch*/" +'\\\n' +  token[index_and:].strip("\n")
-        elif GlobalVar.while_condition:
-            GlobalVar.modified_text += token[0:index_and] + "/*while branch*/" + '\\\n' + token[index_and:].strip("\n")
-        elif GlobalVar.for_condition:
-            GlobalVar.modified_text += token[0:index_and]+ "/*for branch*/" + '\\\n' + token[index_and:].strip("\n")
-    if index_or != -1:
-        if GlobalVar.if_condition:
-            GlobalVar.modified_text += token[0:index_or] + "/*if branch*/" +'\\\n' + token[index_or:].strip("\n")
-        elif GlobalVar.while_condition:
-            GlobalVar.modified_text += token[0:index_or] + "/*while branch*/" + '\\\n' + token[index_or:].strip("\n")
-        elif GlobalVar.for_condition:
-            GlobalVar.modified_text += token[0:index_or] + "/*for branch*/" + '\\\n' + token[index_or:].strip("\n")
+    bad_quotes = [m.start() for m in re.finditer("\'\"\'", condition)]
+    for bad_quote in bad_quotes:
+        if bad_quote != -1 and len(index_list_quotes) > 0:
+            index_list_quotes.remove(bad_quote + 1)
 
-def tag_condition_last_operator_in_preprocessor(token):
-    index_and = token.find("&&")
-    index_or = token.find("||")
-    if index_and != -1:
-        if GlobalVar.if_condition:
+    index_list_open_comm = [m.start() for m in re.finditer("\/\*", condition)]
+    index_list_close_comm = [m.start() for m in re.finditer("\*/", condition)]
 
-            GlobalVar.modified_text += token[0:index_and]+ "/*if branch*/" +'\\\n' +  token[index_and:].strip("\\\n")
-        elif GlobalVar.while_condition:
-            GlobalVar.modified_text += token[0:index_and] + "/*while branch*/" + '\\\n' + token[index_and:].strip("\\\n")
-        elif GlobalVar.for_condition:
-            GlobalVar.modified_text += token[0:index_and]+ "/*for branch*/" + '\\\n' + token[index_and:].strip("\\\n")
-    if index_or != -1:
-        if GlobalVar.if_condition:
-            GlobalVar.modified_text += token[0:index_or] + "/*if branch*/" +'\\\n' + token[index_or:].strip("\\\n")
-        elif GlobalVar.while_condition:
-            GlobalVar.modified_text += token[0:index_or] + "/*while branch*/" + '\\\n' + token[index_or:].strip("\\\n")
-        elif GlobalVar.for_condition:
-            GlobalVar.modified_text += token[0:index_or] + "/*for branch*/" + '\\\n' + token[index_or:].strip("\\\n")
+    index_list_and = [m.start() for m in re.finditer("&&", condition)]
+    index_list_or = [m.start() for m in re.finditer("\|\|", condition)]
+    index_list_binary_op = sorted(index_list_and + index_list_or)
 
-def tag_condition_last_operator(token):
-    index_and = token.find("&&")
-    index_or = token.find("||")
-    if index_and != -1:
-        if GlobalVar.if_condition:
-            GlobalVar.modified_text += token[0:index_and]+ "/*if branch*/" +'\n' +  token[index_and:].strip("\n")
-        elif GlobalVar.while_condition:
-            GlobalVar.modified_text += token[0:index_and] + "/*while branch*/" + '\n' + token[index_and:].strip("\n")
-        elif GlobalVar.for_condition:
-            GlobalVar.modified_text += token[0:index_and]+ "/*for branch*/" + '\n' + token[index_and:].strip("\n")
-    if index_or != -1:
-        if GlobalVar.if_condition:
-            GlobalVar.modified_text += token[0:index_or] + "/*if branch*/" +'\n' + token[index_or:].strip("\n")
-        elif GlobalVar.while_condition:
-            GlobalVar.modified_text += token[0:index_or] + "/*while branch*/" + '\n' + token[index_or:].strip("\n")
-        elif GlobalVar.for_condition:
-            GlobalVar.modified_text += token[0:index_or] + "/*for branch*/" + '\n' + token[index_or:].strip("\n")
+    bad_indexes = []
+    if len(index_list_binary_op) >= 1 and len(index_list_open_comm) != 0:
+        index_list_comm = sorted(index_list_open_comm + index_list_close_comm)
+        bad_indexes = get_bad_indexes(index_list_comm, index_list_binary_op)
 
-def tag_condition_operator_no_backslash(token):
-    if GlobalVar.if_condition:
-        GlobalVar.modified_text += "/*if branch*/" +'\n' + token
-    elif GlobalVar.while_condition:
-        GlobalVar.modified_text += "/*while branch*/" + '\n' + token
-    elif GlobalVar.for_condition:
-        GlobalVar.modified_text += "/*for branch*/" + '\n' + token
+    bad_indexes_quotes = []
+
+    if len(index_list_binary_op) >= 1 and len(index_list_quotes) != 0:
+        #print GlobalVar.condition
+        bad_indexes_quotes = get_bad_indexes_quotes(index_list_quotes, index_list_binary_op, condition)
+
+    clean_list = [x for x in index_list_binary_op if x not in bad_indexes]
+    clean_list = [x for x in clean_list if x not in bad_indexes_quotes]
+
+    return clean_list
 
 
-def tag_condition_preprocessor(token):
-    if GlobalVar.if_condition:
-        GlobalVar.modified_text += "/*if branch*/" + '\\\n' + token.strip('\\\n')
-    elif GlobalVar.while_condition:
-        GlobalVar.modified_text += "/*while branch*/" + '\\\n' + token.strip('\\\n')
-    elif GlobalVar.for_condition:
-        GlobalVar.modified_text += "/*for branch*/" + '\\\n' + token.strip('\\\n')
+def get_bad_indexes(index_list_comm, index_list_binary_op):
+    bad_indexes = []
+    for i in xrange(0, len(index_list_comm), 2):
+        for j in xrange(len(index_list_binary_op)):
+            if index_list_binary_op[j] in range(index_list_comm[i], index_list_comm[i + 1]):
+                bad_indexes.append(index_list_binary_op[j])
+    return bad_indexes
 
 
-def tag_condition_close_paren(token):
-    if GlobalVar.if_condition:
-        GlobalVar.modified_text += "/*if branch*/" + token
-    elif GlobalVar.while_condition:
-        GlobalVar.modified_text += "/*while branch*/" + token
-    elif GlobalVar.for_condition:
-        GlobalVar.modified_text += "/*for branch*/" + token
+def get_bad_indexes_quotes(index_list_comm, index_list_binary_op, condition):
 
+    #print index_list_comm
+    new_index_list_comm = index_list_comm
+    bad_indexes = []
+    escaped_quotes = []
+    for i in xrange(len(index_list_comm)):
+        if count_backslash(condition, index_list_comm[i]) % 2 == 1:
+            escaped_quotes.append(index_list_comm[i])
+
+    for i in xrange(len(escaped_quotes)):
+        #print escaped_quotes[i]
+        new_index_list_comm.remove(escaped_quotes[i])
+
+    if len(new_index_list_comm) > 0:
+        for i in xrange(0, len(new_index_list_comm), 2):
+
+            for j in xrange(len(index_list_binary_op)):
+                if index_list_binary_op[j] in range(new_index_list_comm[i], new_index_list_comm[i + 1]):
+                    bad_indexes.append(index_list_binary_op[j])
+
+    return bad_indexes
 
 
 """
@@ -294,7 +288,20 @@ The operation is performed if the token does not contain '"'
 
 
 def update_in_string(token):
+    #print GlobalVar.in_string
+    #print token,' ' ,token.find("\'\\\"\'")
+
+    if token.find("\'\\\"\'") != -1 and GlobalVar.in_string is False:
+        GlobalVar.in_string = False
+        #print "aici"
+        """
+        list_index_simple = [m.start() for m in re.finditer("\'\"\'", token)]
+        if len(list_index_simple) % 2 == 0:
+            GlobalVar.in_string = False
+        """
+        return
     if token.find('"') != -1 and token.find("\'\"\'") == -1:
+        #print "aici"
         list_index_double_quotes = [m.start() for m in re.finditer('"', token)]
         for i in list_index_double_quotes:
             if GlobalVar.in_string:
@@ -302,3 +309,4 @@ def update_in_string(token):
                     GlobalVar.in_string = False
             else:
                 GlobalVar.in_string = True
+
