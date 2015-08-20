@@ -1,8 +1,0 @@
-helpers.py
-linia 49 - added len(stripped_line_again) > 0 
-linia 
-
-
-apply_on_folder.py
-- facut recursiv. modificat complet!
-- NU mai are main 
