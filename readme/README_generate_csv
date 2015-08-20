@@ -1,0 +1,2 @@
+Takes a gcov file and parse it.
+Generates the CSV and parsed output based on GCOV input file.
