@@ -9,6 +9,7 @@ import generate_csv
 import parse
 import ini
 import constants
+import blacklist
 def main():
 	wrongUnexp = False
 	wrongExp = False 
@@ -31,7 +32,7 @@ def main():
 	args = parser.parse_args()
 
 	collect_statistics.FILENAME = args.filename[0]
-	filename = args.filename[0]
+	constants.PATH_TO_SOURCES = args.filename[0]
 	lowerLimit = args.l
 	upperLimit = args.u
 	folder =  args.F
@@ -41,19 +42,27 @@ def main():
 	all = args.a
 	lcovPath = args.d
 	iniPath = args.i
+	constants.Constants.PATH_TO_SOURCES = args.filename[0]
 
 	if lowerLimit != None:
 		collect_statistics.EXPECTED_LIMIT = lowerLimit
 
 	if upperLimit != None:
 		collect_statistics.UNEXPECTED_LIMIT = upperLimit
+	print iniPath
 
 	if iniPath != None:
-		constants.DEFAULT_INI_FILE = iniPath
+		constants.Constants.DEFAULT_INI_FILE = iniPath
 
+	constants.Constants.IR = ini.IniReader(constants.Constants.DEFAULT_INI_FILE)
+	constants.Constants.IR.read()
+	constants.Constants.BR = blacklist.BlacklistReader(constants.Constants.IR.getRule("Config.BLACKLIST"))
+	constants.Constants.BR.read()
+	constants.Constants.IR.toString()
 
 	""" edits and tags branches """
-	parse.start(filename)
+
+	#parse.start(constants.Constants.PATH_TO_SOURCES)
 
 
 
@@ -62,23 +71,22 @@ def main():
 		using with intstrument.py
 	"""
 
-	instrument.instrument(filename, lcovPath)
+	#instrument.instrument(constants.Constants.PATH_TO_SOURCES, lcovPath)
 
 	"""
 		Generate csv file/s
 	"""
 	#print filename
 	#print os.system("ls ")
-	if os.path.isdir(filename) :
-		generate_csv.applyOnFolder(filename + "GCOVS")
+	#if os.path.isdir(constants.Constants.PATH_TO_SOURCES) :
+	#	generate_csv.applyOnFolder(constants.Constants.PATH_TO_SOURCES + "GCOVS")
 
-	else :
-		generate_csv.generate(filename + ".gcov")
-
+	#else :
+	#	generate_csv.generate(constants.Constants.PATH_TO_SOURCES + ".gcov")
 	"""
 		handles the format of output
 	"""
-	collect_statistics.collect(filename + "/GCOVS/")
+	#collect_statistics.collect(constants.Constants.PATH_TO_SOURCES + "/GCOVS/")
 	"""
 	if all == True and cstat != None:
 		cstat.printAll()

@@ -26,7 +26,7 @@ class Condition():
 		self.branch0 = br0
 		self.branch1 = br1
 		self.proc = pr
-		self.state = constants.MISSING
+		self.state = constants.Constants.MISSING
 
 	def toString(self):
 		s = self.filename + " "
@@ -96,22 +96,22 @@ class Collector():
 			#	print path
 			path = path.replace("/GCOVS/", "/")
 			if num_br > 2 :
-				mod_line = [constants.OVERFLOW , exp, constants.NONE, (b0 + b1), proc, b0, b1,  lista[5], lista[6], lista[7], path]
-			elif exp == constants.EXPECTED and proc < EXPECTED_LIMIT:
+				mod_line = [constants.Constants.OVERFLOW , exp, constants.Constants.NONE, (b0 + b1), proc, b0, b1,  lista[5], lista[6], lista[7], path]
+			elif exp == constants.Constants.EXPECTED and proc < EXPECTED_LIMIT:
 				self.wrongExpected.append(Condition(filename, line, exp, b0, b1, proc))
-				mod_line = [constants.WRONG, exp, constants.UNEXPECTED , (b0 + b1) , proc, b0, b1, lista[5], lista[6], lista[7], path]
-			elif exp == constants.UNEXPECTED and proc > UNEXPECTED_LIMIT:
+				mod_line = [constants.Constants.WRONG, exp, constants.Constants.UNEXPECTED , (b0 + b1) , proc, b0, b1, lista[5], lista[6], lista[7], path]
+			elif exp == constants.Constants.UNEXPECTED and proc > UNEXPECTED_LIMIT:
 				self.wrongUnexpected.append(Condition(filename, line, exp, b0, b1, proc))
-				mod_line = [constants.WRONG, exp, constants.EXPECTED , (b0 + b1) , proc, b0, b1, lista[5], lista[6], lista[7], path]
-			elif (exp == constants.EXPECTED and proc > EXPECTED_LIMIT) or\
-				(exp == constants.UNEXPECTED and proc < UNEXPECTED_LIMIT):
+				mod_line = [constants.Constants.WRONG, exp, constants.Constants.EXPECTED , (b0 + b1) , proc, b0, b1, lista[5], lista[6], lista[7], path]
+			elif (exp == constants.Constants.EXPECTED and proc > EXPECTED_LIMIT) or\
+				(exp == constants.Constants.UNEXPECTED and proc < UNEXPECTED_LIMIT):
 				self.rightPredicted.append(Condition(filename, line, exp, b0, b1, proc))
-				mod_line = [constants.CORRECT, exp, exp, (b0 + b1), proc, b0, b1, lista[5], lista[6], lista[7], path]
+				mod_line = [constants.Constants.CORRECT, exp, exp, (b0 + b1), proc, b0, b1, lista[5], lista[6], lista[7], path]
 			else :
 				if proc < (UNEXPECTED_LIMIT + EXPECTED_LIMIT)/2 :
-					mod_line = [constants.MISSING, exp, constants.UNEXPECTED, (b0 + b1), proc, b0, b1, lista[5], lista[6], lista[7], path]
+					mod_line = [constants.Constants.MISSING, exp, constants.Constants.UNEXPECTED, (b0 + b1), proc, b0, b1, lista[5], lista[6], lista[7], path]
 				else :
-					mod_line = [constants.MISSING, exp, constants.EXPECTED, (b0 + b1), proc, b0, b1, lista[5], lista[6], lista[7], path]
+					mod_line = [constants.Constants.MISSING, exp, constants.Constants.EXPECTED, (b0 + b1), proc, b0, b1, lista[5], lista[6], lista[7], path]
 			#print len(mod_line)
 			self.map[key] = mod_line
 
@@ -120,9 +120,9 @@ class Collector():
 
 		for key in self.map :
 			s = str(key[0]) + " / Line " + str(key[0]) + ": " + str(self.map[key][0]) + "\n"
-			if self.map[key][0] == constants.WRONG or self.map[key][0] == constants.MISSING :
+			if self.map[key][0] == constants.Constants.WRONG or self.map[key][0] == constants.Constants.MISSING :
 				s += "Expected Hint: " + self.map[key][2] + "(Taken" + str(self.map[key][4]) + "%) instead of " + self.map[key][1] +"\n"
-			elif self.map[key][0] == constants.CORRECT :
+			elif self.map[key][0] == constants.Constants.CORRECT :
 				s += "Current Hint: " + self.map[key][1] + "\n"
 			s +=  "Total: " + str(self.map[key][3]) + " / Taken: " + str(self.map[key][5]) + "(" + str(self.map[key][4]) + "%) / Not Taken: " +  str(self.map[key][6]) + " (" + str(100-self.map[key][4]) + "%)\n\n"
 			ofile.write(s)

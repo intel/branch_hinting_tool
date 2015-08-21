@@ -5,17 +5,9 @@ import sys
 import argparse
 import constants
 import ini
-def getRule(name):
-        if name in constants.INI_MAP:
-            return constants.INI_MAP[name]
-        else:
-            return None
-def printRules():
-	for key in constants.INI_MAP:
-		print key + " - " + constants.INI_MAP[key]
-
+import collect_statistics
 #IR.toString()
-IR = None
+
 OLD_opt_flag = "-O2"
 NEW_opt_flag = "-O0"
 OLD_prof_flag = "-fprofile-generate"
@@ -45,12 +37,7 @@ if args.path != None :
 
 if args.numthreads != None :
 	NUM_THREADS = args.numthreads
-
-IR = constants.IR
-if IR == None:
-	print "WTF???"
-
-print "Target file: " + TARGET + "\nFolder path: " + PATH + "\nNum Threads: " + str(NUM_THREADS)
+#print "Target file: " + TARGET + "\nFolder path: " + PATH + "\nNum Threads: " + str(NUM_THREADS)
 if DEST != None:
 	print "LCOV destination folder: " + DEST
 	command = "rm -r " + DEST + "/lcov_results"
@@ -60,6 +47,7 @@ if DEST != None:
 	command = "mkdir -p " + DEST + "/lcov_results/html"
 	os.system(command)
 	print command
+
 
 print "Changind directory to " + PATH
 os.chdir(PATH)
@@ -76,15 +64,13 @@ print command
 
 os.system("cp Makefile.copy Makefile")
 os.system("make clean")
-
-printRules()
-
-command = IR.getRule("Makefile.RULE")  #+" &> /dev/null"
+print constants.Constants.IR.toString()
+command = constants.Constants.IR.getRule("Makefile.RULE")  #+" &> /dev/null"
 os.system(command)
 print command
 
 os.system("pwd")
-command =  IR.getRule("Config.COMMAND")+ " " + IR.getRule("Config.TARGET")# + " &> /dev/null"
+command =  constants.Constants.IR.getRule("Config.COMMAND") # + " &> /dev/null"
 os.system(command)
 print command
 
@@ -93,7 +79,7 @@ if DEST != None :
 	command = "lcov --directory " + PATH + "/Zend/.libs/ " + "--rc lcov_branch_coverage=1 --capture --o " + DEST + "/lcov_results/results.lcov"
 	os.system(command)
 	print command
-	
+
 	command = "genhtml --branch-coverage -o " + DEST + "/lcov_results/html " + DEST + "/lcov_results/results.lcov"
 	os.system(command)
 	print command
@@ -115,6 +101,3 @@ os.system("cp Makefile.copy Makefile")
 if args.r == True :
 	os.system("make clean")
 	os.system("make -j " + str(NUM_THREADS) + " &> /dev/null")
-
-
-IR.toString()

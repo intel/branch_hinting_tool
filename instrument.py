@@ -3,18 +3,21 @@
 import os
 import sys
 import generate_gcov
+import constants
+import autogen
 #import oldVersion_generate_gcov
 FLAGS = ""
 target = ""
-zend_make_script = "autogenerate.py"
+make_script = "autogenerate.py"
 def instrument(target, flags):
 	global FLAGS
 	if flags != "" and flags != None :
 		FLAGS = " -d " + flags
 	if os.path.isdir(target) :
-		command = "./" + zend_make_script + " -p " + target + FLAGS
-		print command
-		os.system(command)
+		#command = "./" + make_script + " -p " + target + FLAGS
+		#print constants.Constants.IR.toString()
+		#os.system(command)
+		autogen.start({'path':target})
 		# aici trebuie sa adaug generate_gcov
 		generate_gcov.generate(target)
 #		oldVersion_generate_gcov.generate(target)

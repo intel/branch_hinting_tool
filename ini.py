@@ -3,7 +3,7 @@ __author__ = 'Gabriel-Cosmin Samoila'
 import os
 import sys
 import constants
-
+import main
 class IniReader():
 
     def __init__(self, filen):
@@ -46,13 +46,13 @@ class IniReader():
                 self.map[key] = value
                 #print key + " - " + value
         for key in self.map:
-            constants.INI_MAP[key] = self.map[key]
-        for item in constants.INI_KEYS:
+            constants.Constants.INI_MAP[key] = self.map[key]
+        for item in constants.Constants.INI_KEYS:
             if item not in self.map:
-                raise EnvironmentError(item + ' is not properly set in ' + constants.DEFAULT_INI_FILE + ' file')
+                raise EnvironmentError(item + ' is not properly set in ' + constants.Constants.DEFAULT_INI_FILE + ' file')
         if "Config.LIBS" in self.map:
             #print "HEIL: " + self.map["Config.LIBS"]
-            constants.LIBS_PATH = self.map["Config.LIBS"]
+            constants.Constants.LIBS_PATH = self.map["Config.LIBS"]
 
     def getRule(self, name):
         if name in self.map:
@@ -64,6 +64,7 @@ class IniReader():
         for key in self.map:
             print key + "=" + self.map[key]
 
+"""
 def main():
     IR = IniReader(sys.argv[1])
     IR.read()
@@ -71,3 +72,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+"""

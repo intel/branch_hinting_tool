@@ -22,4 +22,4 @@ def main(argv=sys.argv):
 
 def start(target):
 
-	apply_on_folder.apply(target, constants.BLACKLIST)
+	apply_on_folder.apply(target, constants.Constants.BLACKLIST)

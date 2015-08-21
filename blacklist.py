@@ -18,11 +18,11 @@ class BlacklistReader():
         content = self.file.readlines()
         for line in content:
             if len(line) > 3:
-                constants.BLACKLIST.append(line.rstrip(" \n"))
+                constants.Constants.BLACKLIST.append(line.rstrip(" \n"))
 
     def toString(self):
         s = ""
-        for file in constants.BLACKLIST:
+        for file in constants.Constants.BLACKLIST:
             s += file
         return s
 

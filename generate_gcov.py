@@ -42,7 +42,7 @@ def recursive(target, dest, build_path):
 
 			#go to build path
 			os.chdir(build_path)
-			gcov_command = "gcov -bcu -o " + current_path + "/" + constants.IR.getRule("Config.LIBS") + " " + current_path + "/" + item #+ " &> /dev/null"
+			gcov_command = "gcov -bcu -o " + current_path + "/" + constants.Constants.IR.getRule("Config.LIBS") + " " + current_path + "/" + item #+ " &> /dev/null"
 			print gcov_command
 
 			os.system(gcov_command)

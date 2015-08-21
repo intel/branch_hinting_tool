@@ -127,7 +127,7 @@ class Condition:
 		self.line = line
 		self.branches = []
 		self.sumBranches = 0
-		self.type = constants.UNKNOWN
+		self.type = constants.Constants.UNKNOWN
 		self.multiCond = 0
 		self.num_branches = 0
 		self.expected = 2 # 0 - EXPECTED ; 1 - UNEXPECTED ; 2 - UNKNOWN
@@ -166,13 +166,15 @@ class Condition:
 
 	def establishType(self):
 		if "if branch" in self.test:
-			self.type = constants.IF
+			self.type = constants.Constants.IF
 		elif "while branch" in self.test:
-			self.type = constants.WHILE
+			self.type = constants.Constants.WHILE
 		elif "for branch" in self.test:
-			self.type = constants.FOR
+			self.type = constants.Constants.FOR
 		elif "?" in self.test: #conditional expression - might have some issues on C++ code
-			self.type = constants.IF
+			self.type = constants.Constants.IF
+		elif "weird condition" in self.test:
+			self.type = constants.Constants.WEIRD
 
 	def removeBranch(self, branch):
 		self.branches.remove(branch)
@@ -405,19 +407,19 @@ class Classifier:
 	def classifyExpected(self):
 		for cond in self.allConds:
 			if "UNEXPECTED" in cond.getTest():
-				cond.expected = constants.UNEXPECTED
+				cond.expected = constants.Constants.UNEXPECTED
 			elif "EXPECTED" in cond.getTest():
-				cond.expected = constants.EXPECTED
+				cond.expected = constants.Constants.EXPECTED
 			else:
-				cond.expected = constants.NONE
+				cond.expected = constants.Constants.NONE
 
 	def classifyType(self):
 		for cond in self.allConds:
-			if cond.type == constants.IF:
+			if cond.type == constants.Constants.IF:
 				self.ifConds.append(cond)
-			elif cond.type == constants.WHILE:
+			elif cond.type == constants.Constants.WHILE:
 				self.whileConds.append(cond)
-			elif cond.type == constants.FOR:
+			elif cond.type == constants.Constants.FOR:
 				self.forConds.append(cond)
 			elif cond.type == "MACRO":
 				self.macroConds.append(cond)
