@@ -3,9 +3,12 @@
 import os
 import sys
 import constants
+"""
+    This class is used for reading blacklist configuration file.
+    Saves each filename into Constants class.
+"""
 
 class BlacklistReader():
-
     def __init__(self, filen):
         self.filename = filen
         try:
@@ -15,23 +18,17 @@ class BlacklistReader():
             raise
 
     def read(self):
+        """
+        Open a file and read it's content line by line.
+        Appends each line in Constants.BLACKLIST
+        """
         content = self.file.readlines()
         for line in content:
             if len(line) > 3:
                 constants.Constants.BLACKLIST.append(line.rstrip(" \n"))
 
-    def toString(self):
+    def to_string(self):
         s = ""
         for file in constants.Constants.BLACKLIST:
             s += file
         return s
-
-"""
-def main():
-    br = BlacklistReader(sys.argv[1])
-    br.read()
-    print br.toString()
-
-if __name__ == "__main__":
-    main()
-"""

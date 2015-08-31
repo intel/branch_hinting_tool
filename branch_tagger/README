@@ -14,29 +14,26 @@ Contents:
 
 WHAT IT DOES?
 branch_tagger takes .c and .h files from a folder and tags all the if, while, for branches with the comment
-/*if/for/while branch*/
-If there are multiple conditions inside and if, for, while, branch_tagger will split the line after the
-binary operator(&& or ||) and it will tag each line from the line which contains the if, while, for until the last
-closing parenthesis of the if, while, for, regardless of the content.
+/*branch_type branch boolean_operator_type*/
+branch_type = {if, for, while}
+boolean_operator_type = {&&, ||}
+
+If there are multiple conditions inside and if, for, while, branch_tagger will eliminate all line endings, then it will
+split the line before the binary operator(&& or ||) and it will tag each condition until the last closing parenthesis
+of the if, while, for.
 
 Example: if /* multi-line
             comment */ (a && b || /* comment
-
                         inside branch*/ c) a = b
           -------->
-          if /* multi-line if branch
-            comment */ (a && b || /* comment if branch
-
-                        inside branch*/ c) /*if branch*/a = b
+          if /* multi-line             comment */ (a /*if branch &&*/
+          && b /*if branch ||*/
+          || /* comment                         inside branch*/ c) /*if branch &&*/a = b
 
 
 USAGE:
 The script will make a copy of the folder which contains the files you want to modify(a.k.a. the .c and .h files which
 will have the if, for and while branches tagged) and it will replace the original ones with the tagged files.
-
-Run:
-python apply_on_folder.py /absolute/path/to/folder
-Example: python apply_on_folder.py /home/cbuse/Desktop/php/php-src/Zend/
 
 The script will replace the original files with the files having the branches tagged. The original files are kept in
 OriginalFolderCopy.
@@ -48,7 +45,7 @@ The area which will be tagged is called context. The context begins when an if, 
 the last closing parenthesis is found. Example of context: if (a && b)
 
 OutContext represents the interior of a comment, a string or everything else which is not inside a context.
-This delimitation had to be done because elements of the cotexts may appear outside the context. For example:
+This delimitation had to be done because elements of the context may appear outside the context. For example:
 /* if something happens, this function is called*/ or some_string = "if"
 Tagging the branches from a preprocessor directive must take into account the backslash at the end of the line.
 In order to identify the branches from preprocessor directive, there is a global variable which keeps track
@@ -62,9 +59,9 @@ state machine goes to the next state. When inside a multi-line comment-/**/-(InC
 InConditionOpenPrenInComment), only finding the end of the comment will lead to leaving
 that state. One line comments -//- are treated differently; the treatment is explained in helpers.py, in
 function tokenize_line.
-In case there are multiple parenthesis inside a context, the last parenthesis is identified with the
-help of a counter initialized with value 1, which increments when an open parenthesis is encountered and decrements
-when a closing parenthesis is encountered.
+In case there are multiple parenthesis inside a context, the last parenthesis is identified using a counter initialized
+with value 1, which increments when an open parenthesis is encountered and decrements when a closing parenthesis is
+encountered. Cases where ')' or '(' are encountered are treated also.
 
                                                                        +----------------------------------------------+
                                                       +--------+       |                                              |
@@ -101,23 +98,25 @@ when a closing parenthesis is encountered.
                                            /*   */        +------------------------->+InConditionOpenParenCloseParen+-|
                                            |    |                                    +------------------------------+       
                                            |    |                                                                           
-                             +-------------v----+---------+
-                             |InConditionOpenPrenInComment|
-                             +-----+-----^----------------+
+                             +-------------v----+----------+
+                             |InConditionOpenParenInComment|
+                             +-----+-----^-----------------+
                                    |     |                                                                                  
                                    |     |                                                                                  
                                    +-----+                                                                                  
 
 
-In this case, I tag the context until I find another branch. When another branch is found,
-I reset the counter and consider the new context.
+In this case particular case, the context is tagged with /*weird condition*/. When another branch is found inside the
+current branch, the counter is reset and the new context is considered.
 Example :
 #ifdef A
 					if (a >= 0
 #else
-					if/while ((b > 0 && (a == 0 && b))
+					if ((b > 0 && (a == 0 && b))
 #endif
 					&& c == 0)
-Just by analyzing the text, you can not know whether the last statement belongs to the if or the while. The script will
-tag the last statement according to the last branch it finds. In the example "&& c == 0)" will be tagged as
-/*while branch*/.
+
+
+Possible problems:
+The parser was tested only on source files of PHP and Python. It may not work on other projects which contain corner
+cases which were not considered.

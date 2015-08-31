@@ -1,3 +1,0 @@
-autogenerate.sh needs to be in php folder and run it with root permision
-It builds php from files generating instrumented files.
-Edit this script for more options.
