@@ -29,7 +29,6 @@ def apply_on_folder(target, ofile, blacklist):
             print "Start on: " + item
             tag_file.tag(item, item + "_copy")
             end = time.time()
-            # os.system(command)
             command = "cp " + item + "_copy " + item
             os.system(command)
             command = "rm " + item + "_copy "
@@ -58,3 +57,5 @@ def apply(target, blacklist):
         apply_on_folder(path_input, ofile, blacklist)
     else:
         tag_file.tag(path_input, path_input)
+
+

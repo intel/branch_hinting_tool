@@ -1,6 +1,6 @@
 from state import State
 from global_var import GlobalVar
-from helpers import tag, get_index_list, tag_weird_condition, tag_default_condition
+from helpers import tag, get_index_list, tag_default_condition, identify_weird_condition
 
 """
 All the states of the finite state machine are implemented here.
@@ -126,7 +126,6 @@ class InConditionOpenParen(State):
             GlobalVar.count_paren += 1
 
         if token == "if":
-            GlobalVar.weird_condition = True
             GlobalVar.if_condition = True
             GlobalVar.count_paren = 0
             return InConditionOpenParen()
@@ -167,21 +166,9 @@ class InConditionOpenParenCloseParen(State):
         index_list = get_index_list(GlobalVar.condition)
         string = GlobalVar.condition
 
-        else_index = GlobalVar.condition.find("else")
-        define_index = GlobalVar.condition.find("define")
-        if GlobalVar.weird_condition or GlobalVar.condition.find("ifdef") != -1 or GlobalVar.condition.find(
-                "endif") != -1 or GlobalVar.condition.find("ifndef") != -1 \
-                or (define_index != -1 and (not GlobalVar.condition[define_index - 1].isalnum()) and (
-                        not GlobalVar.condition[define_index + 6].isalnum()) and \
-                            (GlobalVar.condition[define_index - 1] != '_' and GlobalVar.condition[
-                                    define_index + 4] != '_')) or \
-                (else_index != -1 and (not GlobalVar.condition[else_index - 1].isalnum()) and (
-                        not GlobalVar.condition[else_index + 4].isalnum()) and \
-                         (GlobalVar.condition[else_index - 1] != '_' and GlobalVar.condition[else_index + 4] != '_')) \
-                        or GlobalVar.condition.find("#if") != -1:
-
-            GlobalVar.modified_text = "".join([GlobalVar.modified_text, tag_weird_condition(GlobalVar.condition)])
-
+        if identify_weird_condition(GlobalVar.condition):
+            #GlobalVar.modified_text = "".join([GlobalVar.modified_text, tag_weird_condition(GlobalVar.condition)])
+            GlobalVar.modified_text = "".join([GlobalVar.modified_text, GlobalVar.condition])
             GlobalVar.modified_text = "".join([GlobalVar.modified_text, token])
 
         else:
@@ -226,6 +213,5 @@ class InConditionOpenParenCloseParen(State):
         GlobalVar.while_condition = False
         GlobalVar.for_condition = False
         GlobalVar.condition = ""
-        GlobalVar.weird_condition = False
 
         return OutContext()

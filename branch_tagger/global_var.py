@@ -19,5 +19,3 @@ class GlobalVar:
     comment = False
 
     condition = ""
-
-    weird_condition = False

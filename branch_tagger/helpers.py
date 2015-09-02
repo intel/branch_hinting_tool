@@ -35,6 +35,7 @@ def tokenize_line(orig_line, separators):
             return [orig_line]
 
     # detect one line comment, which is not inside a string
+    # TODO: do this check more general???
     if orig_line.find("//") != -1 and orig_line[orig_line.find("//"):].find('"') == -1:
         comment = orig_line[orig_line.find("//"):]
         string = orig_line[0:orig_line.find("//")]
@@ -133,25 +134,6 @@ def tag_default_condition(token, endl):
         GlobalVar.modified_text = "".join([GlobalVar.modified_text, token.rstrip(endl), "/*while branch &&*/", endl])
     elif GlobalVar.for_condition:
         GlobalVar.modified_text = "".join([GlobalVar.modified_text, token.rstrip(endl), "/*for branch &&*/", endl])
-
-
-def tag_weird_condition(condition):
-    index_list_endl = [m.start() for m in re.finditer("\n", condition)]
-    if len(index_list_endl) != 0:
-        index_open_comm = condition.find("/*")
-
-        if index_open_comm != -1 and condition.find("*/") != -1 and index_open_comm < condition.find(
-                "*/") and '\n' in condition[index_open_comm:condition.find("*/")]:
-            return condition
-        tagged_condition = ""
-        tagged_condition += condition[0: index_list_endl[0]] + "/*weird condition*/"
-
-        for i in range(0, len(index_list_endl) - 1):
-            tagged_condition += condition[index_list_endl[i]: index_list_endl[i + 1]] + "/*weird condition*/"
-
-        tagged_condition += condition[index_list_endl[len(index_list_endl) - 1]: len(condition)] + "/*weird condition*/"
-        return tagged_condition
-    return condition + "/*weird condition*/"
 
 
 def false_paren(line, separators):
@@ -272,3 +254,10 @@ def update_in_string(token):
                     GlobalVar.in_string = False
             else:
                 GlobalVar.in_string = True
+
+
+def identify_weird_condition(cond):
+    regex = re.compile(r"[ \t]*#[ \t]*[a-z]+")
+    if regex.search(cond) is not None:
+        return True
+    return False
