@@ -12,6 +12,9 @@ def tag(input, output):
     ApplyFSMFile().run_all(input)
 
     f_tagged = open(output, 'w+')
-    f_tagged.write(GlobalVar.modified_text)
-
+    #print "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    #print GlobalVar.modified_text.getvalue()
+    #print "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    f_tagged.write(GlobalVar.modified_text.getvalue())
+    GlobalVar.modified_text.truncate(0)
     f_tagged.close()

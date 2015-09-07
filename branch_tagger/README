@@ -106,8 +106,9 @@ encountered. Cases where ')' or '(' are encountered are treated also.
                                    +-----+                                                                                  
 
 
-In this case particular case, the context is tagged with /*weird condition*/. When another branch is found inside the
-current branch, the counter is reset and the new context is considered.
+In the case where inside the if, there are preprocessing directives, the context is not tagged. There are very 
+few cases like that. When another branch is found inside the current branch, the parenthesis counter is reset and the 
+new context is considered.
 Example :
 #ifdef A
 					if (a >= 0

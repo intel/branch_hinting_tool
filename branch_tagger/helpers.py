@@ -24,21 +24,24 @@ def tokenize_line(orig_line, separators):
     if index_open != -1 or index_close != -1:
         return false_paren(orig_line, separators)
 
+    if orig_line.find("#error no suitable type for ssize_t found") != -1:
+        return [orig_line]
     # detect beginning of preprocessor directive
     regex = re.compile(r"[ \t]*#[ \t]*[a-z]+")
     if regex.match(orig_line) is not None:
-        if orig_line.find("for") == -1:
-            string = orig_line[regex.match(orig_line).end() + 1:]
-            token_list = [orig_line[0: regex.match(orig_line).end() + 1]]
-            return token_list + split(string, separators)
-        else:
-            return [orig_line]
+        string = orig_line[regex.match(orig_line).end() + 1:]
+        token_list = [orig_line[0: regex.match(orig_line).end() + 1]]
+        return token_list + split(string, separators)
 
     # detect one line comment, which is not inside a string
+    # TODO: do this check more general???
+    """
     if orig_line.find("//") != -1 and orig_line[orig_line.find("//"):].find('"') == -1:
         comment = orig_line[orig_line.find("//"):]
         string = orig_line[0:orig_line.find("//")]
+
         return split(string, separators) + [comment]
+    """
     return split(orig_line, separators)
 
 
@@ -128,30 +131,11 @@ def tag(condition):
 
 def tag_default_condition(token, endl):
     if GlobalVar.if_condition:
-        GlobalVar.modified_text = "".join([GlobalVar.modified_text, token.rstrip(endl), "/*if branch &&*/", endl])
+        GlobalVar.modified_text.write(token.rstrip(endl) + "/*if branch &&*/" + endl)
     elif GlobalVar.while_condition:
-        GlobalVar.modified_text = "".join([GlobalVar.modified_text, token.rstrip(endl), "/*while branch &&*/", endl])
+        GlobalVar.modified_text.write(token.rstrip(endl) + "/*while branch &&*/" + endl)
     elif GlobalVar.for_condition:
-        GlobalVar.modified_text = "".join([GlobalVar.modified_text, token.rstrip(endl), "/*for branch &&*/", endl])
-
-
-def tag_weird_condition(condition):
-    index_list_endl = [m.start() for m in re.finditer("\n", condition)]
-    if len(index_list_endl) != 0:
-        index_open_comm = condition.find("/*")
-
-        if index_open_comm != -1 and condition.find("*/") != -1 and index_open_comm < condition.find(
-                "*/") and '\n' in condition[index_open_comm:condition.find("*/")]:
-            return condition
-        tagged_condition = ""
-        tagged_condition += condition[0: index_list_endl[0]] + "/*weird condition*/"
-
-        for i in range(0, len(index_list_endl) - 1):
-            tagged_condition += condition[index_list_endl[i]: index_list_endl[i + 1]] + "/*weird condition*/"
-
-        tagged_condition += condition[index_list_endl[len(index_list_endl) - 1]: len(condition)] + "/*weird condition*/"
-        return tagged_condition
-    return condition + "/*weird condition*/"
+        GlobalVar.modified_text.write(token.rstrip(endl) + "/*for branch &&*/" + endl)
 
 
 def false_paren(line, separators):
@@ -272,3 +256,10 @@ def update_in_string(token):
                     GlobalVar.in_string = False
             else:
                 GlobalVar.in_string = True
+
+
+def identify_weird_condition(cond):
+    regex = re.compile(r"[ \t]*#[ \t]*[a-z]+")
+    if regex.search(cond) is not None:
+        return True
+    return False

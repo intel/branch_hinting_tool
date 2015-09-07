@@ -1,6 +1,7 @@
 from state import State
 from global_var import GlobalVar
-from helpers import tag, get_index_list, tag_weird_condition, tag_default_condition
+from helpers import tag, get_index_list, tag_default_condition, identify_weird_condition
+from cStringIO import StringIO
 
 """
 All the states of the finite state machine are implemented here.
@@ -20,10 +21,11 @@ condition is being traversed(if, for, while)
 
 class OutContext(State):
     def run_state(self):
-        print "Tagging file"
+        print "OutContext"
+        #print "Tagging file"
 
     def next_state(self, token):
-        GlobalVar.modified_text = "".join([GlobalVar.modified_text, token])
+        GlobalVar.modified_text.write(token)
 
         if token.find('#') != -1 and token.endswith('\n') and (not token.endswith('\\\n')):
             GlobalVar.in_preprocessor = False
@@ -42,30 +44,45 @@ class OutContext(State):
             GlobalVar.in_comment = True
             return InComment()
         if token == "if" or token == "if\n":
-            GlobalVar.modified_text = "".join([GlobalVar.modified_text, token])
-            GlobalVar.modified_text = GlobalVar.modified_text[:-len(token)]
+            #GlobalVar.modified_text.write(token)
+            #GlobalVar.modified_text = GlobalVar.modified_text[:-len(token)]
             GlobalVar.if_condition = True
             return InCondition()
         if token == "while":
-            GlobalVar.modified_text = "".join([GlobalVar.modified_text, token])
-            GlobalVar.modified_text = GlobalVar.modified_text[:-len(token)]
+            #GlobalVar.modified_text.write(token)
+            #GlobalVar.modified_text = GlobalVar.modified_text[:-len(token)]
             GlobalVar.while_condition = True
             return InCondition()
         if token == "for":
-            GlobalVar.modified_text = "".join([GlobalVar.modified_text, token])
-            GlobalVar.modified_text = GlobalVar.modified_text[:-len(token)]
+            #GlobalVar.modified_text.write(token)
+            #GlobalVar.modified_text = GlobalVar.modified_text[:-len(token)]
             GlobalVar.for_condition = True
             return InCondition()
 
+        if token.find("//") != -1 and GlobalVar.in_string is False and token.find("///") == -1:
+            return InLineComment()
         return OutContext()
 
-
-class InComment(State):
+class InLineComment(State):
     def run_state(self):
         pass
 
     def next_state(self, token):
-        GlobalVar.modified_text = "".join([GlobalVar.modified_text, token])
+        GlobalVar.in_string = False
+        GlobalVar.modified_text.write(token)
+        if token.endswith("\n"):
+            return OutContext()
+        return InLineComment()
+
+class InComment(State):
+    def run_state(self):
+        print "InComment"
+        #pass
+
+    def next_state(self, token):
+       
+        GlobalVar.modified_text.write(token)
+
         if token.find("*/") != -1:
             GlobalVar.in_comment = False
             return OutContext()
@@ -78,11 +95,11 @@ class InComment(State):
 
 class InCondition(State):
     def run_state(self):
-        print "inCondition"
-        pass
+        print "InCondition"
+        #pass
 
     def next_state(self, token):
-        GlobalVar.condition = "".join([GlobalVar.condition, token])
+        GlobalVar.condition.write(token)
 
         if token.find("/*") != -1:
             GlobalVar.in_comment = True
@@ -96,10 +113,11 @@ class InCondition(State):
 
 class InConditionInComment(State):
     def run_state(self):
-        pass
+        print "InConditionInComment"
+        #pass
 
     def next_state(self, token):
-        GlobalVar.condition = "".join([GlobalVar.condition, token])
+        GlobalVar.condition.write(token)
 
         if token.find("*/") != -1:
             GlobalVar.in_comment = False
@@ -109,11 +127,12 @@ class InConditionInComment(State):
 
 class InConditionOpenParen(State):
     def run_state(self):
-        pass
+        print "InConditionOpenParen"
+        #pass
 
     def next_state(self, token):
 
-        GlobalVar.condition = "".join([GlobalVar.condition, token])
+        GlobalVar.condition.write(token)
 
         if token.find("/*") != -1:
             GlobalVar.in_comment = True
@@ -126,7 +145,6 @@ class InConditionOpenParen(State):
             GlobalVar.count_paren += 1
 
         if token == "if":
-            GlobalVar.weird_condition = True
             GlobalVar.if_condition = True
             GlobalVar.count_paren = 0
             return InConditionOpenParen()
@@ -135,16 +153,19 @@ class InConditionOpenParen(State):
             GlobalVar.while_condition = True
             GlobalVar.count_paren = 0
             return InConditionOpenParen()
-
+        # in one line comment
+        if token.find("//") != -1 and GlobalVar.in_string is False and token.find("///") == -1:
+            GlobalVar.line_comment = True
         return InConditionOpenParen()
 
 
 class InConditionOpenParenInComment(State):
     def run_state(self):
-        pass
+        print "InConditionOpenParenInComment"
+        #pass
 
     def next_state(self, token):
-        GlobalVar.condition = "".join([GlobalVar.condition, token])
+        GlobalVar.condition.write(token)
 
         if token.find("*/") != -1:
             GlobalVar.in_comment = False
@@ -160,30 +181,25 @@ boolean operators.
 """
 class InConditionOpenParenCloseParen(State):
     def run_state(self):
-        pass
+        print "InConditionOpenParenCloseParen"
+        #pass
 
     def next_state(self, token):
 
-        index_list = get_index_list(GlobalVar.condition)
-        string = GlobalVar.condition
+        index_list = get_index_list(GlobalVar.condition.getvalue())
 
-        else_index = GlobalVar.condition.find("else")
-        define_index = GlobalVar.condition.find("define")
-        if GlobalVar.weird_condition or GlobalVar.condition.find("ifdef") != -1 or GlobalVar.condition.find(
-                "endif") != -1 or GlobalVar.condition.find("ifndef") != -1 \
-                or (define_index != -1 and (not GlobalVar.condition[define_index - 1].isalnum()) and (
-                        not GlobalVar.condition[define_index + 6].isalnum()) and \
-                            (GlobalVar.condition[define_index - 1] != '_' and GlobalVar.condition[
-                                    define_index + 4] != '_')) or \
-                (else_index != -1 and (not GlobalVar.condition[else_index - 1].isalnum()) and (
-                        not GlobalVar.condition[else_index + 4].isalnum()) and \
-                         (GlobalVar.condition[else_index - 1] != '_' and GlobalVar.condition[else_index + 4] != '_')) \
-                        or GlobalVar.condition.find("#if") != -1:
-
-            GlobalVar.modified_text = "".join([GlobalVar.modified_text, tag_weird_condition(GlobalVar.condition)])
-
-            GlobalVar.modified_text = "".join([GlobalVar.modified_text, token])
-
+        #print "-------------------------------------------------------------------------------------------------------"
+        string = GlobalVar.condition.getvalue()
+        #print "-------------------------------------------------------------------------------------------------------"
+        #print string
+        if identify_weird_condition(GlobalVar.condition.getvalue()):
+            #GlobalVar.modified_text = "".join([GlobalVar.modified_text, tag_weird_condition(GlobalVar.condition)])
+            GlobalVar.modified_text.write(GlobalVar.condition.getvalue())
+            GlobalVar.modified_text.write(token)
+        elif GlobalVar.line_comment:
+            GlobalVar.modified_text.write(GlobalVar.condition.getvalue())
+            GlobalVar.modified_text.write(token)
+            GlobalVar.line_comment = False
         else:
             if string.find("\\\n") != -1:
                 string = string.replace("\\\n", "")
@@ -193,39 +209,39 @@ class InConditionOpenParenCloseParen(State):
             if len(index_list) == 0:
 
                 if GlobalVar.if_condition:
-                    GlobalVar.modified_text = "".join(
-                        [GlobalVar.modified_text, GlobalVar.condition, "/*if branch &&*/"])
+                    GlobalVar.modified_text.write(GlobalVar.condition.getvalue() + "/*if branch &&*/")
                 elif GlobalVar.while_condition:
-                    GlobalVar.modified_text = "".join(
-                        [GlobalVar.modified_text, GlobalVar.condition, "/*while branch &&*/"])
+                    GlobalVar.modified_text.write(GlobalVar.condition.getvalue() + "/*while branch &&*/")
                 elif GlobalVar.for_condition:
-                    GlobalVar.modified_text = "".join(
-                        [GlobalVar.modified_text, GlobalVar.condition, "/*for branch &&*/"])
-                GlobalVar.modified_text = "".join([GlobalVar.modified_text, token])
+                    GlobalVar.modified_text.write(GlobalVar.condition.getvalue() + "/*for branch &&*/")
+                GlobalVar.modified_text.write(token)
 
             else:
                 new = tag(string)
-                GlobalVar.modified_text = "".join([GlobalVar.modified_text, new])
+                GlobalVar.modified_text.write(new)
 
                 if token.endswith("\\\n"):
                     tag_default_condition(token, "\\\n")
-                elif token.endswith("\n"):
+                elif token.endswith("\n") and (not token.endswith("\\\n")):
                     tag_default_condition(token, '\n')
                 else:
                     if GlobalVar.if_condition:
-                        GlobalVar.modified_text = "".join([GlobalVar.modified_text, token, "/*if branch &&*/"])
+                        GlobalVar.modified_text.write(token + "/*if branch &&*/")
                     elif GlobalVar.while_condition:
-                        GlobalVar.modified_text = "".join([GlobalVar.modified_text, token, "/*while branch &&*/"])
+                        GlobalVar.modified_text.write(token + "/*while branch &&*/")
                     elif GlobalVar.for_condition:
-                        GlobalVar.modified_text = "".join([GlobalVar.modified_text, token, "/*for branch &&*/"])
+                        GlobalVar.modified_text.write(token + "/*for branch &&*/")
 
-
+        """
+        print "---------------------------------------------------------------------------------------------------------"
+        print GlobalVar.modified_text.getvalue()
+        print "---------------------------------------------------------------------------------------------------------"
+        """
         # the condition which was being traversed has ended,
         # so the flags indicating the condition type are reset
         GlobalVar.if_condition = False
         GlobalVar.while_condition = False
         GlobalVar.for_condition = False
-        GlobalVar.condition = ""
-        GlobalVar.weird_condition = False
+        GlobalVar.condition = StringIO()
 
         return OutContext()
