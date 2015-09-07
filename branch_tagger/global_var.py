@@ -22,5 +22,9 @@ class GlobalVar:
 
     comment = False
 
+<<<<<<< HEAD
     line_comment = False
     condition = StringIO()
+=======
+    condition = ""
+>>>>>>> fccb7db8d0088e3a7dec7c34dd0c32cb0745141e

@@ -18,3 +18,7 @@ def tag(input, output):
     f_tagged.write(GlobalVar.modified_text.getvalue())
     GlobalVar.modified_text.truncate(0)
     f_tagged.close()
+
+input = "/home/cbuse/Desktop/branch_test/test.c"
+output = "/home/cbuse/Desktop/branch_test/test.out.c"
+tag(input, output)

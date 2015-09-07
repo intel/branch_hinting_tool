@@ -35,7 +35,10 @@ def tokenize_line(orig_line, separators):
 
     # detect one line comment, which is not inside a string
     # TODO: do this check more general???
+<<<<<<< HEAD
     """
+=======
+>>>>>>> fccb7db8d0088e3a7dec7c34dd0c32cb0745141e
     if orig_line.find("//") != -1 and orig_line[orig_line.find("//"):].find('"') == -1:
         comment = orig_line[orig_line.find("//"):]
         string = orig_line[0:orig_line.find("//")]
@@ -135,7 +138,11 @@ def tag_default_condition(token, endl):
     elif GlobalVar.while_condition:
         GlobalVar.modified_text.write(token.rstrip(endl) + "/*while branch &&*/" + endl)
     elif GlobalVar.for_condition:
+<<<<<<< HEAD
         GlobalVar.modified_text.write(token.rstrip(endl) + "/*for branch &&*/" + endl)
+=======
+        GlobalVar.modified_text = "".join([GlobalVar.modified_text, token.rstrip(endl), "/*for branch &&*/", endl])
+>>>>>>> fccb7db8d0088e3a7dec7c34dd0c32cb0745141e
 
 
 def false_paren(line, separators):

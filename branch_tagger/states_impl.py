@@ -1,7 +1,10 @@
 from state import State
 from global_var import GlobalVar
 from helpers import tag, get_index_list, tag_default_condition, identify_weird_condition
+<<<<<<< HEAD
 from cStringIO import StringIO
+=======
+>>>>>>> fccb7db8d0088e3a7dec7c34dd0c32cb0745141e
 
 """
 All the states of the finite state machine are implemented here.
@@ -186,6 +189,7 @@ class InConditionOpenParenCloseParen(State):
 
     def next_state(self, token):
 
+<<<<<<< HEAD
         index_list = get_index_list(GlobalVar.condition.getvalue())
 
         #print "-------------------------------------------------------------------------------------------------------"
@@ -200,6 +204,16 @@ class InConditionOpenParenCloseParen(State):
             GlobalVar.modified_text.write(GlobalVar.condition.getvalue())
             GlobalVar.modified_text.write(token)
             GlobalVar.line_comment = False
+=======
+        index_list = get_index_list(GlobalVar.condition)
+        string = GlobalVar.condition
+
+        if identify_weird_condition(GlobalVar.condition):
+            #GlobalVar.modified_text = "".join([GlobalVar.modified_text, tag_weird_condition(GlobalVar.condition)])
+            GlobalVar.modified_text = "".join([GlobalVar.modified_text, GlobalVar.condition])
+            GlobalVar.modified_text = "".join([GlobalVar.modified_text, token])
+
+>>>>>>> fccb7db8d0088e3a7dec7c34dd0c32cb0745141e
         else:
             if string.find("\\\n") != -1:
                 string = string.replace("\\\n", "")
@@ -242,6 +256,10 @@ class InConditionOpenParenCloseParen(State):
         GlobalVar.if_condition = False
         GlobalVar.while_condition = False
         GlobalVar.for_condition = False
+<<<<<<< HEAD
         GlobalVar.condition = StringIO()
+=======
+        GlobalVar.condition = ""
+>>>>>>> fccb7db8d0088e3a7dec7c34dd0c32cb0745141e
 
         return OutContext()

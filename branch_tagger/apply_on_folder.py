@@ -89,4 +89,8 @@ def apply(target, blacklist):
     else:
         tag_file.tag(path_input, path_input)
 
+<<<<<<< HEAD
 #apply(sys.argv[1], sys.argv[2])
+=======
+
+>>>>>>> fccb7db8d0088e3a7dec7c34dd0c32cb0745141e
