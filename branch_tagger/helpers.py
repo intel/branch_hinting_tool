@@ -5,9 +5,9 @@ from global_var import GlobalVar
 """
 Takes a line from a file and tokenize it according to the function "split", keeping in mind some exceptions:
     1. If the line contains one of the strings ')' or '(', only the parts before and after the problematic strings will
-     be split.
+     be split. This is done to avoid corner cases such as --if (c == ')')-- and be misled into thinking the context
+     ended sooner.
     2. If the line begins with a preprocessor directive, the line will split after it
-    3. If the line has a one-line comment, the line will split before it
 
 @input: orig_string - the line from file to split
 @input: separators - a list of separators according to which the line will be split
@@ -23,9 +23,10 @@ def tokenize_line(orig_line, separators):
     index_open = orig_line.find("\'(\'")
     if index_open != -1 or index_close != -1:
         return false_paren(orig_line, separators)
-
-    if orig_line.find("#error no suitable type for ssize_t found") != -1:
+    if orig_line.find("#error") != -1 and (
+                        orig_line.find("if") != -1 or orig_line.find("for") != -1 or orig_line.find("while") != -1):
         return [orig_line]
+
     # detect beginning of preprocessor directive
     regex = re.compile(r"[ \t]*#[ \t]*[a-z]+")
     if regex.match(orig_line) is not None:
@@ -33,15 +34,6 @@ def tokenize_line(orig_line, separators):
         token_list = [orig_line[0: regex.match(orig_line).end() + 1]]
         return token_list + split(string, separators)
 
-    # detect one line comment, which is not inside a string
-    # TODO: do this check more general???
-    """
-    if orig_line.find("//") != -1 and orig_line[orig_line.find("//"):].find('"') == -1:
-        comment = orig_line[orig_line.find("//"):]
-        string = orig_line[0:orig_line.find("//")]
-
-        return split(string, separators) + [comment]
-    """
     return split(orig_line, separators)
 
 
@@ -79,11 +71,13 @@ def split(string, separators):
 
 
 """
-The following functions tag the lines inside a condition(if, for, while)
-according to the boolean operator.Specific tagging for each type of condition(if, for, while) is done by checking
-the state of global variables which retain the type of condition traversed at a certain moment.
+Takes a context without line endings and tags it accordingly
 
-@input: token
+@input: condition - context(conditional instruction)
+@input: comment_tag - if/for/while
+@input: backslash - \n or \\n
+
+@return: tagged_condition - tagged context
 """
 
 
@@ -94,20 +88,16 @@ def __tag__(condition, comment_tag, backslash):
     binary_op_and = " &&*/"
 
     if condition[index_list[0]] == '&':
-        tagged_condition = "".join(
-            [tagged_condition, condition[0: index_list[0]], comment_tag, binary_op_and, backslash])
+        tagged_condition += condition[0: index_list[0]] + comment_tag + binary_op_and + backslash
     else:
-        tagged_condition = "".join(
-            [tagged_condition, condition[0: index_list[0]], comment_tag, binary_op_or, backslash])
+        tagged_condition += condition[0: index_list[0]] + comment_tag + binary_op_or + backslash
 
     for i in range(0, len(index_list) - 1):
         if condition[index_list[i + 1]] == '&':
-            tagged_condition = "".join(
-                [tagged_condition, condition[index_list[i]: index_list[i + 1]], comment_tag, binary_op_and, backslash])
+            tagged_condition += condition[index_list[i]: index_list[i + 1]] + comment_tag + binary_op_and + backslash
         else:
-            tagged_condition = "".join(
-                [tagged_condition, condition[index_list[i]: index_list[i + 1]], comment_tag, binary_op_or, backslash])
-    tagged_condition = "".join([tagged_condition, condition[index_list[len(index_list) - 1]: len(condition)]])
+            tagged_condition += condition[index_list[i]: index_list[i + 1]] + comment_tag + binary_op_or + backslash
+    tagged_condition += condition[index_list[len(index_list) - 1]: len(condition)]
     return tagged_condition
 
 
@@ -138,6 +128,17 @@ def tag_default_condition(token, endl):
         GlobalVar.modified_text.write(token.rstrip(endl) + "/*for branch &&*/" + endl)
 
 
+"""
+Splits a line of code taking into account the cases --if (c == ')')--
+
+@input: line - the line of code which contains '(' or ')'
+@input: separators - separators
+
+@return: split_line - the line split accordingly
+
+"""
+
+
 def false_paren(line, separators):
     index_open_paren = [m.start() for m in re.finditer("\'\(\'", line)]
     index_close_paren = [m.start() for m in re.finditer("\'\)\'", line)]
@@ -150,6 +151,14 @@ def false_paren(line, separators):
             line[index_paren[i + 1]:index_paren[i + 1] + 3]]
     split_line += split(line[index_paren[len(index_paren) - 1] + 3:], separators)
     return split_line
+
+"""
+Gets a list with the real boolean operators(those which are not inside strings or comments).
+
+@input: condition - context
+
+@return: clean_list - list with the real boolean operators
+"""
 
 
 def get_index_list(condition):
@@ -183,6 +192,16 @@ def get_index_list(condition):
     return clean_list
 
 
+"""
+Gets a list with indexes of boolean operators which are inside multi-line comments.
+
+@input: index_list_comm - list which contains the indexes of "/*" and "*/" from a context
+@input: index_list_binary_op - list which contains the indexes of "&&" and "||" from a context
+
+@return: bad_indexes - list with boolean operators which are inside multi-line comments
+"""
+
+
 def get_bad_indexes(index_list_comm, index_list_binary_op):
     bad_indexes = []
     for i in xrange(0, len(index_list_comm), 2):
@@ -190,6 +209,16 @@ def get_bad_indexes(index_list_comm, index_list_binary_op):
             if index_list_binary_op[j] in range(index_list_comm[i], index_list_comm[i + 1]):
                 bad_indexes.append(index_list_binary_op[j])
     return bad_indexes
+
+
+"""
+Gets a list with indexes of boolean operators which are inside strings, taking into account escaped quotes.
+
+@input: index_list_comm - list which contains the indexes of all quotes from a context
+@input: index_list_binary_op - list which contains the indexes of "&&" and "||" from a context
+
+@return: bad_indexes - list with boolean operators which are inside strings
+"""
 
 
 def get_bad_indexes_quotes(index_list_comm, index_list_binary_op, condition):
@@ -256,6 +285,14 @@ def update_in_string(token):
                     GlobalVar.in_string = False
             else:
                 GlobalVar.in_string = True
+
+
+"""
+Identifies when a conditional instruction contains preprocessor directives.
+
+@input: cond - context
+@:return True/False
+"""
 
 
 def identify_weird_condition(cond):

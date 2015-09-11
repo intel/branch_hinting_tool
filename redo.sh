@@ -9,5 +9,5 @@
 #rm -rf ../python
 #cp -rf ../PYTHON-UNTOUCHED ../python
 
-cd ../python_copy
-./configure
+cd ../php_copy
+./config_php.sh

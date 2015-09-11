@@ -26,11 +26,11 @@ def start(args):
 
     if DEST != None:
         print "LCOV destination folder: " + DEST
-        command = "rm -r " + DEST + "/lcov_results"
+        command = "rm -r " + os.path.join(DEST, "/lcov_results")
         os.system(command)
         print command
 
-        command = "mkdir -p " + DEST + "/lcov_results/html"
+        command = "mkdir -p " + os.path.join(DEST, "lcov_results/html")
         os.system(command)
         print command
 
@@ -64,4 +64,4 @@ def start(args):
     os.system(command)
     print command
 
-    os.system("rm Makefile.copy")
+    #os.system("rm Makefile.copy")

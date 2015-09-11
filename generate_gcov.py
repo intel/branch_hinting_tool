@@ -20,7 +20,7 @@ def generate(target):
     # print command
     os.system(command)
 
-    recursive(target, target + "/GCOVS", target)
+    recursive(target, os.path.join(target, "GCOVS"), target)
 
 
 def recursive(target, dest, build_path):
@@ -34,7 +34,7 @@ def recursive(target, dest, build_path):
     # print os.getcwd()
     for item in dir_ls:
         if item.endswith(".c") or item.endswith(".cpp"):
-            command = "mkdir -p " + dest + "/" + item
+            command = "mkdir -p " + os.path.join(dest, item)
             #	print command
             os.system(command)
         if item.endswith(".c") or item.endswith(".cpp"):
@@ -45,11 +45,11 @@ def recursive(target, dest, build_path):
             os.chdir(build_path)
             gcov_command = "gcov -bcu -o " + current_path + "/" \
                            + constants.Constants.IR.get_rule("Config.LIBS") \
-                           + " " + current_path + "/" + item + " &> /dev/null"
+                           + " " + os.path.join(current_path, item) + " &> /dev/null"
             print gcov_command
 
             os.system(gcov_command)
-            move_command = " mv *.gcov " + dest + "/" + item + " &> /dev/null"
+            move_command = " mv *.gcov " + os.path.join(dest, item) + " &> /dev/null"
             print move_command
             os.system(move_command)
 
@@ -57,7 +57,7 @@ def recursive(target, dest, build_path):
             os.chdir(current_path)
 
         if os.path.isdir(item) and "GCOVS" not in item:
-            recursive(item, dest + "/" + item, build_path)
+            recursive(item, os.path.join(dest, item), build_path)
     os.chdir(old_path)
 
 # generate(sys.argv[1])

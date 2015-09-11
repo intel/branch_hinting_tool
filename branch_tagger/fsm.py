@@ -25,4 +25,3 @@ class FSM:
         for token in tokens:
             update_in_string(token)
             self.current_state = self.current_state.next_state(token)
-            #cd print token, " ", self.current_state, " ", GlobalVar.in_string

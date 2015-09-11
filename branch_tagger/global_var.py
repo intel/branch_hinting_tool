@@ -1,11 +1,10 @@
 # Keeps all the global variables
 from cStringIO import StringIO
+
+
 class GlobalVar:
     def __init__(self):
         pass
-
-
-
 
     modified_text = StringIO()
 

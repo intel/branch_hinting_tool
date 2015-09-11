@@ -89,7 +89,7 @@ def main():
     if os.path.isdir(constants.Constants.PATH_TO_SOURCES):
         sources += "*"
 
-    command = "cp -r " + sources + " " + working_folder
+    command = "cp -r " + sources +" "+ working_folder
     print command
     os.system(command)
 
@@ -112,7 +112,7 @@ def main():
 
 
 
-    parse.start(constants.Constants.PATH_TO_SOURCES)
+    #parse.start(constants.Constants.PATH_TO_SOURCES)
 
 
 
@@ -129,14 +129,14 @@ def main():
     # print filename
     # print os.system("ls ")
     if os.path.isdir(constants.Constants.PATH_TO_SOURCES):
-        generate_csv.apply_on_folder(constants.Constants.PATH_TO_SOURCES + "GCOVS")
+        generate_csv.apply_on_folder(os.path.join(constants.Constants.PATH_TO_SOURCES, "GCOVS"))
 
     else:
         generate_csv.generate(constants.Constants.PATH_TO_SOURCES + ".gcov")
     """
         handles the format of output
     """
-    collect_statistics.collect(constants.Constants.PATH_TO_SOURCES + "/GCOVS/")
+    collect_statistics.collect(os.path.join(constants.Constants.PATH_TO_SOURCES, "GCOVS/"))
 
 if __name__ == "__main__":
     main()
