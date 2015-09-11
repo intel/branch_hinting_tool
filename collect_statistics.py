@@ -228,7 +228,7 @@ class Collector():
         Writes all the results saved in map attribute in addFile() method
         in a csv format
         """
-        print "HEIL: " + FILENAME
+        print "Done. Writing results in " + FILENAME
         try:
             wfile = open(FILENAME, 'w')
         except:

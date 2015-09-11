@@ -25,9 +25,8 @@ def main():
     parser.add_argument('-l', metavar='LOWER', type=int, nargs='?', help='lower limmit acceptable limit for expected')
     parser.add_argument('-u', metavar='UPPER', type=int, nargs='?', help='upper limmit acceptable limit for unexpected')
     parser.add_argument('-F', action='store_true', help='apply on folder')
-    parser.add_argument('-pu', action='store_true', help='prints only those conditions tagged WRONG as UNEXPECTED')
-    parser.add_argument('-pe', action='store_true', help='prints only those conditions tagged WRONG as EXPECTED')
-    parser.add_argument('-pc', action='store_true', help='prints only those conditions RIGHT')
+    parser.add_argument('-p', action='store_true', help='use the parser to parse the files')
+    parser.add_argument('-v', action='store_true', help='verbose')
     parser.add_argument('-a', action='store_true', help='returns output in csv format')
     parser.add_argument('-d', metavar='PATH', type=str, nargs='?', help='PATH where we put the LCOV RESULTS')
     parser.add_argument('-i', metavar='PATH_TO_INI_FILE', type=str, nargs='?', help='ini file path')
@@ -39,9 +38,6 @@ def main():
     lowerLimit = args.l
     upperLimit = args.u
     folder = args.F
-    wrongExp = args.pe
-    wrongUnexp = args.pu
-    right = args.pc
     all = args.a
     lcovPath = args.d
     iniPath = args.i
@@ -107,12 +103,15 @@ def main():
                   + constants.Constants.IR.get_rule("Environment.PREPARE_SCRIPT")
     else:
         command = "./" + constants.Constants.IR.get_rule("Environment.PREPARE_SCRIPT")
-    print command
+
+    if args.v == False:
+        command += " &> /dev/null"
+
     os.system(command)
 
 
-
-    #parse.start(constants.Constants.PATH_TO_SOURCES)
+    if args.p == True:
+        parse.start(constants.Constants.PATH_TO_SOURCES)
 
 
 
@@ -121,7 +120,7 @@ def main():
         using with intstrument.py
     """
 
-    instrument.instrument(constants.Constants.PATH_TO_SOURCES, lcovPath)
+    instrument.instrument(constants.Constants.PATH_TO_SOURCES, lcovPath, args.v)
 
     """
         Generate csv file/s

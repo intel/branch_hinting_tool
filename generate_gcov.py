@@ -8,17 +8,19 @@ path = "."
 os.system("rm -r " + path + "all_folders")
 os.system("mkdir " + path + "all_folders")
 create_path = path + "/Zend/"
+verbose = False
 
-
-def generate(target):
+def generate(target, vb):
+    global verbose
+    verbose = vb
     old_path = os.getcwd()
     os.chdir(target)
     dir_ls = os.listdir(".")
 
     """ Here we create a folder for each source or header file """
-    command = "rm -r GCOVS/"
-    # print command
-    os.system(command)
+    if os.path.exists("GCOVS/"):
+        command = "rm -r GCOVS/"
+        os.system(command)
 
     recursive(target, os.path.join(target, "GCOVS"), target)
 
@@ -45,12 +47,16 @@ def recursive(target, dest, build_path):
             os.chdir(build_path)
             gcov_command = "gcov -bcu -o " + current_path + "/" \
                            + constants.Constants.IR.get_rule("Config.LIBS") \
-                           + " " + os.path.join(current_path, item) + " &> /dev/null"
-            print gcov_command
+                           + " " + os.path.join(current_path, item)
+            if verbose ==  False:
+                gcov_command += " &> /dev/null"
 
             os.system(gcov_command)
-            move_command = " mv *.gcov " + os.path.join(dest, item) + " &> /dev/null"
-            print move_command
+            move_command = " mv *.gcov " + os.path.join(dest, item)
+
+            if verbose == False:
+                move_command += " &> /dev/null"
+
             os.system(move_command)
 
             # go back to current path

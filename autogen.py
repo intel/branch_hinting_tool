@@ -9,7 +9,7 @@ import constants
 """
 
 
-def start(args):
+def start(args, verbose):
     OLD_opt_flag = "-O2"
     NEW_opt_flag = "-O0"
     OLD_prof_flag = "-fprofile-generate"
@@ -37,31 +37,45 @@ def start(args):
     for key in args:
         print key + ":" + args[key]
 
-    print "Changind directory to " + PATH
+    if verbose:
+        print "Changind directory to " + PATH
     os.chdir(PATH)
 
     command = "sed \"s/" + OLD_opt_flag + "/" + NEW_opt_flag \
               + "/g\"" " \"Makefile\" > Makefile.copy"
     os.system(command)
-    print command
+    if verbose:
+        print command
 
     os.system("cp Makefile.copy Makefile")
 
     command = "sed \"s/" + OLD_prof_flag + "/" + NEW_prof_flag \
               + "/g\"" " \"Makefile\" > Makefile.copy"
     os.system(command)
-    print command
+    if verbose:
+        print command
 
     os.system("cp Makefile.copy Makefile")
     os.system("make clean")
-    print constants.Constants.IR.to_string()
-    command = constants.Constants.IR.get_rule("Makefile.RULE")  # +" &> /dev/null"
+    if verbose:
+        print constants.Constants.IR.to_string()
+
+    command = constants.Constants.IR.get_rule("Makefile.RULE")
+    if verbose == False:
+        command += " &> /dev/null"
     os.system(command)
-    print command
+
+    if verbose:
+        print command
 
     os.system("pwd")
-    command = constants.Constants.IR.get_rule("Config.COMMAND")  # + " &> /dev/null"
+    command = constants.Constants.IR.get_rule("Config.COMMAND")
+
+    if verbose ==  False:
+        command += " &> /dev/null"
     os.system(command)
-    print command
+
+    if verbose:
+        print command
 
     #os.system("rm Makefile.copy")

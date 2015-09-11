@@ -9,7 +9,7 @@ csvOutput = ""
 rawOutput = ""
 
 
-print 'Number of arguments:', len(sys.argv), 'arguments.'
+#print 'Number of arguments:', len(sys.argv), 'arguments.'
 print 'Argument List:', str(sys.argv)
 
 
@@ -17,7 +17,7 @@ def apply_on_folder(target):
 
 	old_path = os.getcwd()
 	os.chdir(target)
-	print os.getcwd()
+	#print os.getcwd()
 	dir_ls = os.listdir(".")
 	for item in dir_ls:
 		if os.path.isdir(item):
@@ -69,11 +69,12 @@ def generate(fname):
 		pN = round(nrN * 100.0 / total, 2)
 	else:
 		pI = pN = 0
+	"""
 	print "\n\nStatistics:\n\tExecuted: " + str(pI) \
           + "% (" + str(nrI) + " conditions)"
 	print "\tNever Executed: " + str(pN) + "% (" \
           + str(nrN) + " conditions)"
-
+	"""
 
 
 class Branch:
@@ -233,10 +234,10 @@ class Parser:
 		self.path = filename
 		self.conditii = []
 		self.sharedcond = Condition("",0)
-		print "A parser for file " + self.path + " was created!"
+		#print "A parser for file " + self.path + " was created!"
 
 	def start(self):
-		print "Started to parse gcov file..."
+		#print "Started to parse gcov file..."
 
 		with open(self.path) as f:
 			content = f.read().splitlines()
@@ -311,7 +312,7 @@ class Filter:
 
 		self.interestingConds = [] #useful conditions
 		self.onlyNeverExecuted = [] #conditions with only never executed branches
-		print "Started to filter the conditions results..."
+		#print "Started to filter the conditions results..."
 
 		# here we set conditions types (IF/WHERE/FOR)
 		self.establish_conditions_type()
@@ -529,7 +530,7 @@ class Logger:
 			print "Error on closing file"
 			raise
 
-		print "Done writing in " + self.csvFilename + " ..."
+		#print "Done writing in " + self.csvFilename + " ..."
 
 	def write_raw(self):
 		try:
@@ -564,7 +565,7 @@ class Logger:
 			print "Error on closing file"
 			raise
 
-		print "Done writing in " + self.rawFilename + " ..."
+		#print "Done writing in " + self.rawFilename + " ..."
 
 def print_conds(cond):
 	for c in cond:
