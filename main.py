@@ -25,7 +25,8 @@ def main():
     parser.add_argument('-l', metavar='LOWER', type=int, nargs='?', help='lower limmit acceptable limit for expected')
     parser.add_argument('-u', metavar='UPPER', type=int, nargs='?', help='upper limmit acceptable limit for unexpected')
     parser.add_argument('-F', action='store_true', help='apply on folder')
-    parser.add_argument('-p', action='store_true', help='use the parser to parse the files')
+    parser.add_argument('-p', action='store_true', help='parse and build')
+    parser.add_argument('-r', action='store_true', help='run the workload')
     parser.add_argument('-v', action='store_true', help='verbose')
     parser.add_argument('-a', action='store_true', help='returns output in csv format')
     parser.add_argument('-d', metavar='PATH', type=str, nargs='?', help='PATH where we put the LCOV RESULTS')
@@ -61,7 +62,19 @@ def main():
                             constants.Constants.IR.get_rule("Config.BLACKLIST"))
     constants.Constants.BR.read()
     constants.Constants.IR.to_string()
+    #   LIKELY and UNLIKELY contains the lists with all versions of macros
+    # you use in code for _buildin_expected
+    constants.Constants.LIKELY = constants.Constants.IR.get_rule("Config.LIKELY").split(" ")
+    constants.Constants.UNLIKELY = constants.Constants.IR.get_rule("Config.UNLIKELY").split(" ")
+    if '' in constants.Constants.LIKELY:
+        constants.Constants.LIKELY.remove('')
+    if '' in constants.Constants.UNLIKELY:
+        constants.Constants.UNLIKELY.remove('')
 
+    """print constants.Constants.EXPECTED
+    print "\n"
+    print constants.Constants.UNEXPECTED
+    """
     """ edits and tags branches """
     working_folder = constants.Constants.IR.get_rule("Environment.WORKING_FOLDER")
     if working_folder.endswith("/") == False and os.path.isdir(working_folder):
@@ -95,32 +108,33 @@ def main():
     """
     constants.Constants.PATH_TO_SOURCES = working_folder
 
-    """
-        prepare script
-    """
-    if constants.Constants.IR.get_rule("Environment.PREPARE_SCRIPT").endswith(".py"):
-        command = "python " \
-                  + constants.Constants.IR.get_rule("Environment.PREPARE_SCRIPT")
-    else:
-        command = "./" + constants.Constants.IR.get_rule("Environment.PREPARE_SCRIPT")
-
-    if args.v == False:
-        command += " &> /dev/null"
-
-    os.system(command)
-
-
     if args.p == True:
+
+        """
+        prepare script
+        """
+        if constants.Constants.IR.get_rule("Environment.PREPARE_SCRIPT").endswith(".py"):
+            command = "python " \
+                    + constants.Constants.IR.get_rule("Environment.PREPARE_SCRIPT")
+        else:
+            command = "./" + constants.Constants.IR.get_rule("Environment.PREPARE_SCRIPT")
+
+        if args.v == False:
+            command += " &> /dev/null"
+
+        os.system(command)
+
+
         parse.start(constants.Constants.PATH_TO_SOURCES)
 
 
 
-    """ build/ compile the filename or
-        files contained in the filename(when it's a folder)
-        using with intstrument.py
-    """
+        """ build/ compile the filename or
+            files contained in the filename(when it's a folder)
+            using with intstrument.py
+        """
 
-    instrument.instrument(constants.Constants.PATH_TO_SOURCES, lcovPath, args.v)
+    instrument.instrument(constants.Constants.PATH_TO_SOURCES, lcovPath, args.v, args.p, args.r)
 
     """
         Generate csv file/s

@@ -10,15 +10,15 @@ FLAGS = ""
 target = ""
 
 
-def instrument(target, flags, verbose):
+def instrument(target, flags, verbose, build, run):
     global FLAGS
     if flags != "" and flags != None:
         FLAGS = " -d " + flags
     if os.path.isdir(target):
 
-        autogen.start({'path': target}, verbose)
+        autogen.start({'path': target}, verbose,build, run)
         # aici trebuie sa adaug generate_gcov
-        generate_gcov.generate(target, verbose)
+        generate_gcov.generate(target, verbose, build, run)
 
     else:
         command = "gcc -fprofile-arcs -ftest-coverage " \

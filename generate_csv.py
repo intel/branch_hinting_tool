@@ -344,10 +344,6 @@ class Filter:
 				if text.startswith("call") == False \
                    and text.startswith("unconditional") == False :
 					partialbr.append(br)
-				elif text.startswith("call") == False \
-                     and (text.startswith("unconditional")
-                     and cond.type == "WHILE"):
-					partialbr.append(br)
 			cond.branches = partialbr
 
 	"""
@@ -427,9 +423,13 @@ class Classifier:
 		self.macroConds = []
 	def classify_expected(self):
 		for cond in self.allConds:
-			if "UNEXPECTED" in cond.get_test():
+			if constants.Constants.UNLIKELY != None and\
+				  len(constants.Constants.UNLIKELY) > 0 and\
+				  any(word in cond.get_test() for word in constants.Constants.UNLIKELY):
 				cond.expected = constants.Constants.UNEXPECTED
-			elif "EXPECTED" in cond.get_test():
+			elif constants.Constants.LIKELY != None and\
+				len(constants.Constants.LIKELY) > 0 and\
+				any(word in cond.get_test() for word in constants.Constants.LIKELY):
 				cond.expected = constants.Constants.EXPECTED
 			else:
 				cond.expected = constants.Constants.NONE

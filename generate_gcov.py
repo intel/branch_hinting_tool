@@ -10,7 +10,7 @@ os.system("mkdir " + path + "all_folders")
 create_path = path + "/Zend/"
 verbose = False
 
-def generate(target, vb):
+def generate(target, vb, build, run):
     global verbose
     verbose = vb
     old_path = os.getcwd()

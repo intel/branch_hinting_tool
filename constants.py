@@ -11,6 +11,8 @@ class Constants:
         pass
 
     """ types of tags """
+    LIKELY = None
+    UNLIKELY = None
     EXPECTED = "EXPECTED"
     UNEXPECTED = "UNEXPECTED"
     NONE = "NONE"

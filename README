@@ -1,6 +1,7 @@
 CONTENTS OF THIS FILE
 ---------------------
 * Introduction
+* Usage
 * Requirements and Configuration files
 * Content
 	- Parser Module
@@ -17,6 +18,25 @@ INTRODUCTION
 	branches. Runing time varies from project to project and workload used
 	to collect statistics.A csv file will be obtained after runing this 
 	profiling tool.
+USAGE:
+------
+	Positional arguments:
+  		filename        filename or path to folder( pass -z if folder is PHP
+                        folder
+
+	Optional arguments:
+		-h, --help      show this help message and exit
+  		-l [LOWER]            lower limmit acceptable limit for expected
+  		-u [UPPER]            upper limmit acceptable limit for unexpected
+  		-F                    apply on folder
+  		-p                    parse and build
+  		-r                    run the workload
+  		-v                    verbose
+  		-a                    returns output in csv format
+  		-d [PATH]             PATH where we put the LCOV RESULTS
+  		-i [PATH_TO_INI_FILE] ini file path
+
+    Eg. python main.py ~/path/to/project -i branch_hints.ini -p -r
 
 
 REQUIREMENTS AND CONFIGURATION FILES
