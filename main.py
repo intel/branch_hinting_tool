@@ -82,7 +82,7 @@ def main():
     if constants.Constants.PATH_TO_SOURCES.endswith("/") == False and os.path.isdir(
             constants.Constants.PATH_TO_SOURCES):
         constants.Constants.PATH_TO_SOURCES += "/"
-    if os.path.exists(working_folder):
+    if os.path.exists(working_folder) and args.p:
         raise SystemError(working_folder + " exists."
                           +" Remove or specify another path in ini file.")
 

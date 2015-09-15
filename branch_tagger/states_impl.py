@@ -24,6 +24,7 @@ class OutContext(State):
         pass
 
     def next_state(self, token):
+        token = token[0]
         GlobalVar.modified_text.write(token)
 
         if token.find('#') != -1 and token.endswith('\n') and (not token.endswith('\\\n')):
@@ -66,6 +67,7 @@ class InLineComment(State):
         pass
 
     def next_state(self, token):
+        token = token[0]
         GlobalVar.in_string = False
         GlobalVar.modified_text.write(token)
         if token.endswith("\n"):
@@ -78,7 +80,7 @@ class InComment(State):
         pass
 
     def next_state(self, token):
-
+        token = token[0]
         GlobalVar.modified_text.write(token)
 
         if token.find("*/") != -1:
@@ -96,6 +98,7 @@ class InCondition(State):
         pass
 
     def next_state(self, token):
+        token = token[0]
         GlobalVar.condition.write(token)
 
         if token.find("/*") != -1:
@@ -113,6 +116,7 @@ class InConditionInComment(State):
         pass
 
     def next_state(self, token):
+        token = token[0]
         GlobalVar.condition.write(token)
 
         if token.find("*/") != -1:
@@ -127,7 +131,7 @@ class InConditionOpenParen(State):
         pass
 
     def next_state(self, token):
-
+        token = token[0]
         GlobalVar.condition.write(token)
         if token.find("/*") != -1 and GlobalVar.in_string:
             return InConditionOpenParen()
@@ -161,6 +165,7 @@ class InConditionOpenParenInComment(State):
         pass
 
     def next_state(self, token):
+        token = token[0]
         GlobalVar.condition.write(token)
 
         if token.find("*/") != -1:
@@ -183,6 +188,9 @@ class InConditionOpenParenCloseParen(State):
         pass
 
     def next_state(self, token):
+
+        line_no = str(token[1])
+        token = token[0]
 
         index_list = get_index_list(GlobalVar.condition.getvalue())
         string = GlobalVar.condition.getvalue()
@@ -208,15 +216,15 @@ class InConditionOpenParenCloseParen(State):
             # simple conditions(without boolean operators ||, &&)
             if len(index_list) == 0:
                 if GlobalVar.if_condition:
-                    GlobalVar.modified_text.write(GlobalVar.condition.getvalue() + "/*if branch &&*/")
+                    GlobalVar.modified_text.write(GlobalVar.condition.getvalue() + "/*" + line_no + ": if branch &&*/")
                 elif GlobalVar.while_condition:
-                    GlobalVar.modified_text.write(GlobalVar.condition.getvalue() + "/*while branch &&*/")
+                    GlobalVar.modified_text.write(GlobalVar.condition.getvalue() + "/*" + line_no + ": while branch &&*/")
                 elif GlobalVar.for_condition:
-                    GlobalVar.modified_text.write(GlobalVar.condition.getvalue() + "/*for branch &&*/")
+                    GlobalVar.modified_text.write(GlobalVar.condition.getvalue() + "/*" + line_no + ": for branch &&*/")
                 GlobalVar.modified_text.write(token)
 
             else:
-                new = tag(string)
+                new = tag(string, line_no)
                 GlobalVar.modified_text.write(new)
                 # last simple condition from conditional instruction is tagged by default
                 if token.endswith("\\\n"):
@@ -225,11 +233,11 @@ class InConditionOpenParenCloseParen(State):
                     tag_default_condition(token, '\n')
                 else:
                     if GlobalVar.if_condition:
-                        GlobalVar.modified_text.write(token + "/*if branch &&*/")
+                        GlobalVar.modified_text.write(token + "/*" + line_no + ": if branch &&*/")
                     elif GlobalVar.while_condition:
-                        GlobalVar.modified_text.write(token + "/*while branch &&*/")
+                        GlobalVar.modified_text.write(token + "/*" + line_no + ": while branch &&*/")
                     elif GlobalVar.for_condition:
-                        GlobalVar.modified_text.write(token + "/*for branch &&*/")
+                        GlobalVar.modified_text.write(token + "/*" + line_no + ": for branch &&*/")
 
         # the condition which was being traversed has ended,
         # so the flags indicating the condition type are reset

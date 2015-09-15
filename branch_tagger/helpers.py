@@ -81,42 +81,42 @@ Takes a context without line endings and tags it accordingly
 """
 
 
-def __tag__(condition, comment_tag, backslash):
+def __tag__(condition, comment_tag, backslash, line_no):
     tagged_condition = ""
     index_list = get_index_list(condition)
     binary_op_or = " ||*/"
     binary_op_and = " &&*/"
 
     if condition[index_list[0]] == '&':
-        tagged_condition += condition[0: index_list[0]] + comment_tag + binary_op_and + backslash
+        tagged_condition += condition[0: index_list[0]] + "/*" + line_no + ": " + comment_tag + binary_op_and + backslash
     else:
-        tagged_condition += condition[0: index_list[0]] + comment_tag + binary_op_or + backslash
+        tagged_condition += condition[0: index_list[0]] + "/*" + line_no + ": " + comment_tag + binary_op_or + backslash
 
     for i in range(0, len(index_list) - 1):
         if condition[index_list[i + 1]] == '&':
-            tagged_condition += condition[index_list[i]: index_list[i + 1]] + comment_tag + binary_op_and + backslash
+            tagged_condition += condition[index_list[i]: index_list[i + 1]] + "/*" + line_no + ": " + comment_tag + binary_op_and + backslash
         else:
-            tagged_condition += condition[index_list[i]: index_list[i + 1]] + comment_tag + binary_op_or + backslash
+            tagged_condition += condition[index_list[i]: index_list[i + 1]] + "/*" + line_no + ": " + comment_tag + binary_op_or + backslash
     tagged_condition += condition[index_list[len(index_list) - 1]: len(condition)]
     return tagged_condition
 
 
-def tag(condition):
+def tag(condition, line_no):
     if GlobalVar.if_condition:
         if GlobalVar.in_preprocessor:
-            return __tag__(condition, "/*if branch", "\\\n")
+            return __tag__(condition, "if branch", "\\\n", line_no)
         else:
-            return __tag__(condition, "/*if branch", "\n")
+            return __tag__(condition, "if branch", "\n", line_no)
     elif GlobalVar.while_condition:
         if GlobalVar.in_preprocessor:
-            return __tag__(condition, "/*while branch", "\\\n")
+            return __tag__(condition, "while branch", "\\\n", line_no)
         else:
-            return __tag__(condition, "/*while branch", "\n")
+            return __tag__(condition, "while branch", "\n", line_no)
     elif GlobalVar.for_condition:
         if GlobalVar.in_preprocessor:
-            return __tag__(condition, "/*for branch", "\\\n")
+            return __tag__(condition, "for branch", "\\\n", line_no)
         else:
-            return __tag__(condition, "/*for branch", "\n")
+            return __tag__(condition, "for branch", "\n", line_no)
 
 
 def tag_default_condition(token, endl):

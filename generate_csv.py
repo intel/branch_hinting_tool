@@ -3,6 +3,7 @@ import os
 import sys
 import calculs
 import constants
+import re
 filename = ""
 interestingConds = []
 csvOutput = ""
@@ -11,6 +12,24 @@ rawOutput = ""
 
 #print 'Number of arguments:', len(sys.argv), 'arguments.'
 print 'Argument List:', str(sys.argv)
+
+def isInt(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
+
+def get_line_no(line):
+	list = line.split("*")
+	no = "0"
+	if len(list) <= 1:
+		no = "0"
+	else:
+		number = list[len(list)-1].strip().rstrip()
+		if isInt(number):
+			no = number
+	return no
 
 
 def apply_on_folder(target):
@@ -253,8 +272,17 @@ class Parser:
 				#print "Test line "+str(i)+":\n"
 				"""Split the line to find out the line number where the branch/call occurs"""
 				lista = content[i-1].split(":")
+				#print lista
 				lineno = lista[1].strip().rstrip()
 				test = lista[2].strip().rstrip()
+				#print test
+				"""
+				test = ""
+				for i in range(len(lista)):
+					if i > 1:
+						test += lista[i] + ":"
+				test = test.strip(":")
+				"""
 				self.sharedcond.set_test(test)
 				self.sharedcond.set_line(lineno)
 
@@ -508,7 +536,9 @@ class Logger:
                            + cond.expected + ", " \
                            + str(cond.num_branches) + ", " \
                            + cond.type + ", " \
-                           +  cond.test + "\n"
+                           + get_line_no(cond.test) + ", "\
+						   +  cond.test + "\n"
+					#print get_line_no(cond.test)
 				else:
 					line = str(cond.line) + ", " \
                            + str(round(cond.get_branches()[0].get_probability(),2)) + ", "  \
@@ -517,7 +547,9 @@ class Logger:
                            + cond.expected + ", " \
                            + str(cond.num_branches) + ", " \
                            + cond.type + ", " \
-                           +  cond.test+"\n"
+                           + get_line_no(cond.test) + ", "\
+						   +  cond.test + "\n"
+					#print get_line_no(cond.test)
 				self.csvFile.write(line)
 
 		except:

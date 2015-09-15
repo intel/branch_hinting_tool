@@ -90,14 +90,18 @@ class Collector():
         for i in range(len(content)):
             if i == 0:
                 continue
-
             lista = content[i].split(", ")
+            #print lista
+
             line = int(lista[0])
             proc = int(float(lista[1]))
             b0 = int(lista[2])
             b1 = int(lista[3])
             exp = lista[4]
             num_br = int(lista[5])
+            original_line_no = lista[7].strip().rstrip()
+            if original_line_no == "0":
+                original_line_no = ' '
             key = fname + ", " + str(line)
             if key in self.map:
                 b0 += self.map[key][5]
@@ -116,8 +120,9 @@ class Collector():
                             b1,
                             lista[5],
                             lista[6],
-                            lista[7],
-                            path]
+                            lista[8],
+                            path,
+                            original_line_no]
             elif exp == constants.Constants.EXPECTED \
                     and proc < EXPECTED_LIMIT:
                 self.wrongExpected.append(Condition(filename,
@@ -135,8 +140,9 @@ class Collector():
                             b1,
                             lista[5],
                             lista[6],
-                            lista[7],
-                            path]
+                            lista[8],
+                            path,
+                            original_line_no]
             elif exp == constants.Constants.UNEXPECTED \
                     and proc > UNEXPECTED_LIMIT:
                 self.wrongUnexpected.append(Condition(filename,
@@ -154,8 +160,9 @@ class Collector():
                             b1,
                             lista[5],
                             lista[6],
-                            lista[7],
-                            path]
+                            lista[8],
+                            path,
+                            original_line_no]
             elif (exp == constants.Constants.EXPECTED
                   and proc > EXPECTED_LIMIT) \
                     or (exp == constants.Constants.UNEXPECTED
@@ -175,8 +182,9 @@ class Collector():
                             b1,
                             lista[5],
                             lista[6],
-                            lista[7],
-                            path]
+                            lista[8],
+                            path,
+                            original_line_no]
             else:
                 if proc < (UNEXPECTED_LIMIT + EXPECTED_LIMIT) / 2:
                     mod_line = [constants.Constants.MISSING,
@@ -188,8 +196,9 @@ class Collector():
                                 b1,
                                 lista[5],
                                 lista[6],
-                                lista[7],
-                                path]
+                                lista[8],
+                                path,
+                                original_line_no]
                 else:
                     mod_line = [constants.Constants.MISSING,
                                 exp,
@@ -200,8 +209,9 @@ class Collector():
                                 b1,
                                 lista[5],
                                 lista[6],
-                                lista[7],
-                                path]
+                                lista[8],
+                                path,
+                                original_line_no]
 
             self.map[key] = mod_line
 
@@ -234,13 +244,14 @@ class Collector():
         except:
             print FILENAME + " - Write to file: error opening file for write\n"
             raise
-        s = "PATH, FILENAME, LINE, STATE, CURRENT HINT, EXPECTED HINT," \
+        s = "PATH, FILENAME, LINE,ORIGINAL_LINE_NO, STATE, CURRENT HINT, EXPECTED HINT," \
             + " TOTAL #, TAKEN % , TAKEN, NOT TAKEN, NUM_BRANCHES, BRANCH TYPE, LINE OF CODE\n"
         wfile.write(s)
 
         for key in self.map:
             s = self.map[key][10] + ", " \
                 + str(key) + ", " \
+                + self.map[key][11] + ", " \
                 + self.map[key][0] + ", " \
                 + str(self.map[key][1]) + ", " \
                 + str(self.map[key][2]) + ", " \
@@ -250,7 +261,7 @@ class Collector():
                 + str(self.map[key][6]) + ", " \
                 + str(self.map[key][7]) + ", " \
                 + str(self.map[key][8]) + ", " \
-                + str(self.map[key][9]) + "\n"
+                + str(self.map[key][9]).split(",")[0] + "\n"
             wfile.write(s)
 
         def getMap(self):
