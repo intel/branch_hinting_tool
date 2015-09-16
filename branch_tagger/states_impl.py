@@ -101,16 +101,18 @@ class InCondition(State):
         token = token[0]
         GlobalVar.condition.write(token)
 
+        """
         if token.find("/*") != -1:
             GlobalVar.in_comment = True
             return InConditionInComment()
+        """
         if token == "(":
             GlobalVar.count_paren = 1
             return InConditionOpenParen()
 
         return InCondition()
 
-
+"""
 class InConditionInComment(State):
     def run_state(self):
         pass
@@ -124,7 +126,7 @@ class InConditionInComment(State):
             return InCondition()
 
         return InConditionInComment()
-
+"""
 
 class InConditionOpenParen(State):
     def run_state(self):
@@ -135,9 +137,12 @@ class InConditionOpenParen(State):
         GlobalVar.condition.write(token)
         if token.find("/*") != -1 and GlobalVar.in_string:
             return InConditionOpenParen()
+
+        """
         if token.find("/*") != -1:
             GlobalVar.in_comment = True
             return InConditionOpenParenInComment()
+        """
         if token == ")":
             GlobalVar.count_paren -= 1
             if GlobalVar.count_paren == 0:
@@ -159,7 +164,7 @@ class InConditionOpenParen(State):
             GlobalVar.line_comment = True
         return InConditionOpenParen()
 
-
+""""
 class InConditionOpenParenInComment(State):
     def run_state(self):
         pass
@@ -173,10 +178,10 @@ class InConditionOpenParenInComment(State):
             return InConditionOpenParen()
 
         return InConditionOpenParenInComment()
-
+"""
 
 """
-    This class reconstructs the condition with multiple boolean operators, eliminates all line endings and taqs all
+    This class reconstructs the condition with multiple boolean operators, eliminates all line endings and tags all
 boolean operators.
     Weird conditions(those with unbalanced parenthesis and preprocessor directives such as #ifdef, #ifndef, #else,
 #define, etc) are also checked and tagged with /*weird condition*/.
