@@ -275,6 +275,8 @@ class Parser:
 				#print lista
 				lineno = lista[1].strip().rstrip()
 				test = lista[2].strip().rstrip()
+				if len(lista) > 3:
+					test += lista[3]
 				#print test
 				"""
 				test = ""
