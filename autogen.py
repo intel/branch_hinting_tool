@@ -70,6 +70,11 @@ def start(args, verbose, build, run):
             print command
 
     if run:
+
+        command = "find . -name \*.gcda | xargs rm -f"
+        print command
+        os.system(command)
+
         os.system("pwd")
         command = constants.Constants.IR.get_rule("Config.COMMAND")
 
