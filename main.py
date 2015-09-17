@@ -122,8 +122,9 @@ def main():
         else:
             command = "./" + constants.Constants.IR.get_rule("Environment.PREPARE_SCRIPT")
 
+        print command
         if args.v == False:
-            command += " &> /dev/null"
+            command += " > /dev/null"
 
         os.system(command)
 
@@ -145,6 +146,7 @@ def main():
         """
         # print filename
         # print os.system("ls ")
+        print "Aggregate CSV statistics ..."
         if os.path.isdir(constants.Constants.PATH_TO_SOURCES):
             generate_csv.apply_on_folder(os.path.join(constants.Constants.PATH_TO_SOURCES, "GCOVS"))
 

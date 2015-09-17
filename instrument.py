@@ -15,15 +15,19 @@ def instrument(target, flags, verbose, build, run):
     if flags != "" and flags != None:
         FLAGS = " -d " + flags
     if os.path.isdir(target):
-
         autogen.start({'path': target}, verbose,build, run)
         # aici trebuie sa adaug generate_gcov
+        print "Collect GCOV statistics ..."
         generate_gcov.generate(target, verbose, build, run)
 
     else:
         command = "gcc -fprofile-arcs -ftest-coverage " \
                   + target + " -o " + target + ".o"
+        print command
         os.system(command)
-        os.system("./" + target + ".o")
+        command = "./" + target + ".o"
+        print command
+        os.system(command)
         command = "gcov -bcu " + target
+        print command
         os.system(command)

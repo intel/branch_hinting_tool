@@ -60,5 +60,6 @@ class IniReader():
             return None
 
     def to_string(self):
+        result=""
         for key in self.map:
-            print key + "=" + self.map[key]
+            result = result + key + "=" + self.map[key] + ","
