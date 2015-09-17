@@ -23,8 +23,9 @@ def apply_on_folder(target, ofile, blacklist):
             print item + " is link"
         elif os.path.isdir(item) and os.path.islink(item) is False:
 
+            print "    Parsing folder " + os.path.join(target, item) + " ..."
             if item not in blacklist:
-                apply_on_folder(target + "/" + item, ofile, blacklist)
+                apply_on_folder(os.path.join(target,item), ofile, blacklist)
             else:
                 print "Blacklisted folder: " + item
 
@@ -34,7 +35,7 @@ def apply_on_folder(target, ofile, blacklist):
 
             global_var.GlobalVar.modified_text = StringIO()
 
-            print "Parsing " + os.path.join(target, item) + " ..."
+            # print "    Parsing file " + os.path.join(target, item) + " ..."
             start = time.time()
             tag_file.tag(item, item + "_copy")
             end = time.time()

@@ -129,6 +129,7 @@ def main():
         os.system(command)
 
 
+        print "Parse sources for isolating atomic conditions one per line ..."
         parse.start(constants.Constants.PATH_TO_SOURCES)
 
 

@@ -44,6 +44,8 @@ def start(args, verbose, build, run):
             print key + ":" + args[key]
 
     if build:
+        print "Build instrumented binaries ..."
+        print "    Patch the Makefile ..."
         command = "sed \"s/" + OLD_opt_flag + "/" + NEW_opt_flag \
                   + "/g\"" " \"Makefile\" > Makefile.copy"
         os.system(command)
@@ -64,7 +66,7 @@ def start(args, verbose, build, run):
             print constants.Constants.IR.to_string()
 
         command = constants.Constants.IR.get_rule("Makefile.RULE")
-        print command
+        print "Make binaries: " + command
         if verbose == False:
             command += " > /dev/null"
         os.system(command)
@@ -86,6 +88,6 @@ def start(args, verbose, build, run):
         os.system(command)
 
     if PATH != None:
-        os.chdir(PATH)
+        os.chdir(oldpath)
         
     #os.system("rm Makefile.copy")
