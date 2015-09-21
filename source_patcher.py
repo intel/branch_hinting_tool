@@ -115,7 +115,7 @@ def loadAndProcessStats(statsFilePath, options):
                         takenPercent = float(current[TAKEN_PERC_IDX].strip()) * 0.01
                         minTakenPercent = float(options.minUsagePerc) * 0.01
 
-                        if branchType == "IF" and hintState == "MISSING" and expHint != "NONE" and (takenPercent >= minTakenPercent or takenPercent <= 1.0 - minTakenPercent):
+                        if branchType == "IF" and hintState == "MISSING" and expHint == "EXPECTED" and (takenPercent >= minTakenPercent or takenPercent <= 1.0 - minTakenPercent):
                             branchEntry = BranchEntry()
 
                             branchEntry.line = int(current[LINE_IDX].strip())
@@ -186,9 +186,9 @@ def backupFile(fileEntry):
 
 def hintExpression(hint, expression):
     if hint == "EXPECTED":
-        return "__builtin_expect((" + expression + "), 1)"
+        return "EXPECTED(" + expression + ")"
     if hint == "UNEXPECTED":
-        return "__builtin_expect((" + expression + "), 0)"
+        return "UNEXPECTED(" + expression + ")"
     return expression
 
 ifExpr = re.compile("(if\s*\()")
@@ -223,19 +223,35 @@ def processLine(line, hint, lineNumber):
                     break
     brackets = 0
 
-    for idx in range(exprStart, lineLen):
-        if line[idx] == "(":
-            brackets += 1
-        elif line[idx] == ")":
-            brackets -= 1
+    insideQuotes = False
+    quotes = []
 
-            if brackets <= -1:
-                exprEnd = idx - 1
-                break
-        else:
-            if line[idx] == "\n":
-                exprEnd = idx - 1
-                break
+    for idx in range(exprStart, lineLen):
+        if line[idx] == "\"" or line[idx] == "'":
+            if insideQuotes == False:
+                quotes.append(line[idx])
+                insideQuotes = True
+            else:
+                if quotes[-1] == line[idx]:
+                    quotes = quotes[:-1]
+
+                    if len(quotes) == 0:
+                        insideQuotes = False
+                else:
+                    quotes.append(line[idx])
+        if insideQuotes == False:
+            if line[idx] == "(":
+                brackets += 1
+            elif line[idx] == ")":
+                brackets -= 1
+
+                if brackets <= -1:
+                    exprEnd = idx - 1
+                    break
+
+        if line[idx] == "\n":
+            exprEnd = idx - 1
+            break
 
     if brackets > 0:
         for idx in range(exprStart, exprEnd):
