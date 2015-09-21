@@ -11,7 +11,7 @@ rawOutput = ""
 
 
 #print 'Number of arguments:', len(sys.argv), 'arguments.'
-print 'Argument List:', str(sys.argv)
+#print 'Argument List:', str(sys.argv)
 
 def isInt(s):
     try:
@@ -21,7 +21,16 @@ def isInt(s):
         return False
 
 def get_line_no(line):
-	list = line.split("*")
+    regex = re.compile(r"[*][0-9]+[:][ ]")
+    m = regex.search(line)
+    if m is not None:
+        index_star = m.start()
+        index_points = m.end()
+        return line[index_star + 1:index_points - 2]
+    return "0"
+"""
+def get_line_no(line):
+	list = line.split("
 	no = "0"
 	if len(list) <= 1:
 		no = "0"
@@ -30,7 +39,7 @@ def get_line_no(line):
 		if isInt(number):
 			no = number
 	return no
-
+"""
 
 def apply_on_folder(target):
 
@@ -276,7 +285,7 @@ class Parser:
 				lineno = lista[1].strip().rstrip()
 				test = lista[2].strip().rstrip()
 				if len(lista) > 3:
-					test += lista[3]
+					test += (":" + lista[3])
 				#print test
 				"""
 				test = ""

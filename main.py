@@ -28,7 +28,7 @@ def main():
     parser.add_argument('-p', action='store_true', help='parse and build')
     parser.add_argument('-r', action='store_true', help='run the workload')
     parser.add_argument('-v', action='store_true', help='verbose')
-    parser.add_argument('-a', action='store_true', help='returns output in csv format')
+    parser.add_argument('-a', action='store_true', help='does parse, build and run(equivalent with -p -r)')
     parser.add_argument('-d', metavar='PATH', type=str, nargs='?', help='PATH where we put the LCOV RESULTS')
     parser.add_argument('-i', metavar='PATH_TO_INI_FILE', type=str, nargs='?', help='ini file path')
 
@@ -43,6 +43,9 @@ def main():
     lcovPath = args.d
     iniPath = args.i
     constants.Constants.PATH_TO_SOURCES = args.filename[0]
+    if all:
+        args.p = True
+        args.r = True
 
     #sets lower and upper limit for EXPECTED/UNEXPECTED percentage
     if lowerLimit != None:
@@ -86,29 +89,29 @@ def main():
         raise SystemError(working_folder + " exists."
                           +" Remove or specify another path in ini file.")
 
-    """
-    create working folder and copy content in it
-    """
-    command = "mkdir " + working_folder
-    print command
-    os.system(command)
+
 
     sources = constants.Constants.PATH_TO_SOURCES
-
-    if os.path.isdir(constants.Constants.PATH_TO_SOURCES):
-        sources += "*"
-
-    command = "cp -r " + sources +" "+ working_folder
-    print command
-    os.system(command)
-
-    """
-        now we have copied sources into working folder.
-        Working folder will be our current working directory
-    """
     constants.Constants.PATH_TO_SOURCES = working_folder
 
     if args.p == True:
+        print "\nwith -p\n"
+        """
+        create working folder and copy content in it
+        """
+        command = "mkdir " + working_folder
+        print command
+        os.system(command)
+
+
+        if os.path.isdir(sources):
+            sources += "*"
+
+        command = "cp -r " + sources +" "+ working_folder
+        print command
+        os.system(command)
+
+
 
         """
         prepare script
@@ -119,12 +122,14 @@ def main():
         else:
             command = "./" + constants.Constants.IR.get_rule("Environment.PREPARE_SCRIPT")
 
+        print command
         if args.v == False:
-            command += " &> /dev/null"
+            command += " > /dev/null"
 
         os.system(command)
 
 
+        print "Parse sources for isolating atomic conditions one per line ..."
         parse.start(constants.Constants.PATH_TO_SOURCES)
 
 
@@ -136,20 +141,22 @@ def main():
 
     instrument.instrument(constants.Constants.PATH_TO_SOURCES, lcovPath, args.v, args.p, args.r)
 
-    """
-        Generate csv file/s
-    """
-    # print filename
-    # print os.system("ls ")
-    if os.path.isdir(constants.Constants.PATH_TO_SOURCES):
-        generate_csv.apply_on_folder(os.path.join(constants.Constants.PATH_TO_SOURCES, "GCOVS"))
+    if args.r:
+        """
+            Generate csv file/s
+        """
+        # print filename
+        # print os.system("ls ")
+        print "Aggregate CSV statistics ..."
+        if os.path.isdir(constants.Constants.PATH_TO_SOURCES):
+            generate_csv.apply_on_folder(os.path.join(constants.Constants.PATH_TO_SOURCES, "GCOVS"))
 
-    else:
-        generate_csv.generate(constants.Constants.PATH_TO_SOURCES + ".gcov")
-    """
-        handles the format of output
-    """
-    collect_statistics.collect(os.path.join(constants.Constants.PATH_TO_SOURCES, "GCOVS/"))
+        else:
+            generate_csv.generate(constants.Constants.PATH_TO_SOURCES + ".gcov")
+        """
+            handles the format of output
+        """
+        collect_statistics.collect(os.path.join(constants.Constants.PATH_TO_SOURCES, "GCOVS/"))
 
 if __name__ == "__main__":
     main()

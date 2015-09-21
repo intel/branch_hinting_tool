@@ -10,38 +10,42 @@ import constants
 
 
 def start(args, verbose, build, run):
-    if build:
-        OLD_opt_flag = "-O2"
-        NEW_opt_flag = "-O0"
-        OLD_prof_flag = "-fprofile-generate"
-        NEW_prof_flag = "--coverage"
-        CONT = ""
-        DEST = None
-        PATH = ""
+    OLD_opt_flag = "-O2"
+    NEW_opt_flag = "-O0"
+    OLD_prof_flag = "-fprofile-generate"
+    NEW_prof_flag = "--coverage"
+    CONT = ""
+    DEST = None
+    PATH = None
 
-        if 'dest' in args and args['dest'] != None:
-            DEST = args['dest']
+    if 'dest' in args and args['dest'] != None:
+        DEST = args['dest']
 
-        if 'path' in args and args['path'] != None:
-            PATH = args['path']
-
-        if DEST != None:
-            print "LCOV destination folder: " + DEST
-            command = "rm -r " + os.path.join(DEST, "/lcov_results")
-            os.system(command)
-            print command
-
-            command = "mkdir -p " + os.path.join(DEST, "lcov_results/html")
-            os.system(command)
-            print command
-
-        for key in args:
-            print key + ":" + args[key]
-
+    if 'path' in args and args['path'] != None:
+        PATH = args['path']
+        oldpath = os.getcwd()
         if verbose:
             print "Changind directory to " + PATH
         os.chdir(PATH)
 
+
+    if DEST != None:
+        print "LCOV destination folder: " + DEST
+        command = "rm -r " + os.path.join(DEST, "/lcov_results")
+        os.system(command)
+        print command
+
+        command = "mkdir -p " + os.path.join(DEST, "lcov_results/html")
+        os.system(command)
+        print command
+
+    if verbose:
+        for key in args:
+            print key + ":" + args[key]
+
+    if build:
+        print "Build instrumented binaries ..."
+        print "    Patch the Makefile ..."
         command = "sed \"s/" + OLD_opt_flag + "/" + NEW_opt_flag \
                   + "/g\"" " \"Makefile\" > Makefile.copy"
         os.system(command)
@@ -62,22 +66,28 @@ def start(args, verbose, build, run):
             print constants.Constants.IR.to_string()
 
         command = constants.Constants.IR.get_rule("Makefile.RULE")
+        print "Make binaries: " + command
         if verbose == False:
-            command += " &> /dev/null"
+            command += " > /dev/null"
         os.system(command)
-
-        if verbose:
-            print command
 
     if run:
-        os.system("pwd")
-        command = constants.Constants.IR.get_rule("Config.COMMAND")
 
-        if verbose ==  False:
-            command += " &> /dev/null"
+        command = "find . -name \*.gcda | xargs rm -f"
+        print "Cleanup old statistics ..."
+        print "    "+command
         os.system(command)
 
-        if verbose:
-            print command
+#        os.system("pwd")
+        command = constants.Constants.IR.get_rule("Config.COMMAND")
+        print "Start training ..."
+        print "    "+command
 
+        if verbose ==  False:
+            command += " > /dev/null"
+        os.system(command)
+
+    if PATH != None:
+        os.chdir(oldpath)
+        
     #os.system("rm Makefile.copy")

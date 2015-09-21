@@ -11,6 +11,8 @@ class Constants:
         pass
 
     """ types of tags """
+    EXPECTED_LIMIT = 50
+    UNEXPECTED_LIMIT = 50
     LIKELY = None
     UNLIKELY = None
     EXPECTED = "EXPECTED"

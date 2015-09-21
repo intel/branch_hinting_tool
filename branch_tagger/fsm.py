@@ -17,7 +17,7 @@ class FSM:
         separators = ['(', ')', '\t', ' ', '/*', '*/', '&&', '||']
 
         f = open(filename)
-        print filename
+#        print filename
         line_no = 0
         for line in f.readlines():
             line_no += 1

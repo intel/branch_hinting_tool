@@ -18,11 +18,12 @@ def generate(target, vb, build, run):
     dir_ls = os.listdir(".")
 
     """ Here we create a folder for each source or header file """
-    if os.path.exists("GCOVS/"):
+    if os.path.exists("GCOVS/") and run:
         command = "rm -r GCOVS/"
         os.system(command)
 
-    recursive(target, os.path.join(target, "GCOVS"), target)
+    if run:
+        recursive(target, os.path.join(target, "GCOVS"), target)
 
 
 def recursive(target, dest, build_path):

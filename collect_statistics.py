@@ -12,8 +12,8 @@ FILENAME = ""
 FILENAME_OUT = ""
 file1 = None
 hmap = {}
-EXPECTED_LIMIT = 40  # limit for branch taken
-UNEXPECTED_LIMIT = 60  # limit for branch not taken
+EXPECTED_LIMIT = constants.Constants.EXPECTED_LIMIT  # limit for branch taken
+UNEXPECTED_LIMIT = constants.Constants.EXPECTED_LIMIT  # limit for branch not taken
 
 """
 Class used to store each condition reported by gcov.
@@ -131,18 +131,33 @@ class Collector():
                                                     b0,
                                                     b1,
                                                     proc))
-                mod_line = [constants.Constants.WRONG,
-                            exp,
-                            constants.Constants.UNEXPECTED,
-                            (b0 + b1),
-                            proc,
-                            b0,
-                            b1,
-                            lista[5],
-                            lista[6],
-                            lista[8],
-                            path,
-                            original_line_no]
+                if proc <= UNEXPECTED_LIMIT:
+                    mod_line = [constants.Constants.WRONG,
+                                exp,
+                                constants.Constants.UNEXPECTED,
+                                (b0 + b1),
+                                proc,
+                                b0,
+                                b1,
+                                lista[5],
+                                lista[6],
+                                lista[8],
+                                path,
+                                original_line_no]
+                else:
+                    mod_line = [constants.Constants.CORRECT,
+                                exp,
+                                constants.Constants.NONE,
+                                (b0 + b1),
+                                proc,
+                                b0,
+                                b1,
+                                lista[5],
+                                lista[6],
+                                lista[8],
+                                path,
+                                original_line_no]
+
             elif exp == constants.Constants.UNEXPECTED \
                     and proc > UNEXPECTED_LIMIT:
                 self.wrongUnexpected.append(Condition(filename,
@@ -151,18 +166,33 @@ class Collector():
                                                       b0,
                                                       b1,
                                                       proc))
-                mod_line = [constants.Constants.WRONG,
-                            exp,
-                            constants.Constants.EXPECTED,
-                            (b0 + b1),
-                            proc,
-                            b0,
-                            b1,
-                            lista[5],
-                            lista[6],
-                            lista[8],
-                            path,
-                            original_line_no]
+                if proc > EXPECTED_LIMIT:
+                    mod_line = [constants.Constants.WRONG,
+                                exp,
+                                constants.Constants.EXPECTED,
+                                (b0 + b1),
+                                proc,
+                                b0,
+                                b1,
+                                lista[5],
+                                lista[6],
+                                lista[8],
+                                path,
+                                original_line_no]
+                else:
+                    mod_line = [constants.Constants.CORRECT,
+                                exp,
+                                constants.Constants.NONE,
+                                (b0 + b1),
+                                proc,
+                                b0,
+                                b1,
+                                lista[5],
+                                lista[6],
+                                lista[8],
+                                path,
+                                original_line_no]
+
             elif (exp == constants.Constants.EXPECTED
                   and proc > EXPECTED_LIMIT) \
                     or (exp == constants.Constants.UNEXPECTED
@@ -185,8 +215,23 @@ class Collector():
                             lista[8],
                             path,
                             original_line_no]
+            elif exp == constants.Constants.NONE \
+                    and proc < EXPECTED_LIMIT \
+                    and proc > UNEXPECTED_LIMIT:
+                mod_line = [constants.Constants.CORRECT,
+                            exp,
+                            exp,
+                            (b0 + b1),
+                            proc,
+                            b0,
+                            b1,
+                            lista[5],
+                            lista[6],
+                            lista[8],
+                            path,
+                            original_line_no]
             else:
-                if proc < (UNEXPECTED_LIMIT + EXPECTED_LIMIT) / 2:
+                if proc < UNEXPECTED_LIMIT:
                     mod_line = [constants.Constants.MISSING,
                                 exp,
                                 constants.Constants.UNEXPECTED,
