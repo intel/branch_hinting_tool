@@ -115,7 +115,7 @@ def loadAndProcessStats(statsFilePath, options):
                         takenPercent = float(current[TAKEN_PERC_IDX].strip()) * 0.01
                         minTakenPercent = float(options.minUsagePerc) * 0.01
 
-                        if branchType == "IF" and hintState == "MISSING" and expHint == "EXPECTED" and (takenPercent >= minTakenPercent or takenPercent <= 1.0 - minTakenPercent):
+                        if branchType == "IF" and hintState == "MISSING" and expHint != "NONE" and (takenPercent >= minTakenPercent or takenPercent <= 1.0 - minTakenPercent):
                             branchEntry = BranchEntry()
 
                             branchEntry.line = int(current[LINE_IDX].strip())
