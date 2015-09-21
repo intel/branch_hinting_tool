@@ -13,7 +13,7 @@ FILENAME_OUT = ""
 file1 = None
 hmap = {}
 EXPECTED_LIMIT = constants.Constants.EXPECTED_LIMIT  # limit for branch taken
-UNEXPECTED_LIMIT = constants.Constants.EXPECTED_LIMIT  # limit for branch not taken
+UNEXPECTED_LIMIT = constants.Constants.UNEXPECTED_LIMIT  # limit for branch not taken
 
 """
 Class used to store each condition reported by gcov.
@@ -215,6 +215,7 @@ class Collector():
                             lista[8],
                             path,
                             original_line_no]
+
             elif exp == constants.Constants.NONE \
                     and proc < EXPECTED_LIMIT \
                     and proc > UNEXPECTED_LIMIT:

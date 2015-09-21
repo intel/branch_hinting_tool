@@ -48,11 +48,12 @@ def main():
         args.r = True
 
     #sets lower and upper limit for EXPECTED/UNEXPECTED percentage
-    if lowerLimit != None:
-        collect_statistics.EXPECTED_LIMIT = lowerLimit
-
     if upperLimit != None:
-        collect_statistics.UNEXPECTED_LIMIT = upperLimit
+        constants.Constants.EXPECTED_LIMIT = upperLimit
+        collect_statistics.EXPECTED_LIMIT = upperLimit
+    if lowerLimit != None:
+        constants.Constants.UNEXPECTED_LIMIT = lowerLimit
+        collect_statistics.UNEXPECTED_LIMIT = lowerLimit
 
     #e
     if iniPath != None:
