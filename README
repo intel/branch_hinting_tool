@@ -94,7 +94,7 @@ CONTENT
 
 	1. Parser: It's implementation and functions are described in 
 	branch_tagger/README.
-		Files used to implement this module: parse.py, branch_tagger/*
+		Files used to implement this module: branch_tagger/*
 
 	2. Builder: this section copies your project into workspace and
 	builds it using the rules configured in .ini file. An instrumented

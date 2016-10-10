@@ -116,21 +116,13 @@ def __tag__(condition, comment_tag, backslash, line_no):
 
 
 def tag(condition, line_no):
+    eol = "\\\n" if GlobalVar.in_preprocessor else "\n"
     if GlobalVar.if_condition:
-        if GlobalVar.in_preprocessor:
-            return __tag__(condition, "if branch", "\\\n", line_no)
-        else:
-            return __tag__(condition, "if branch", "\n", line_no)
+        return __tag__(condition, "if branch", eol, line_no)
     elif GlobalVar.while_condition:
-        if GlobalVar.in_preprocessor:
-            return __tag__(condition, "while branch", "\\\n", line_no)
-        else:
-            return __tag__(condition, "while branch", "\n", line_no)
+        return __tag__(condition, "while branch", eol, line_no)
     elif GlobalVar.for_condition:
-        if GlobalVar.in_preprocessor:
-            return __tag__(condition, "for branch", "\\\n", line_no)
-        else:
-            return __tag__(condition, "for branch", "\n", line_no)
+        return __tag__(condition, "for branch", eol, line_no)
 
 
 def tag_default_condition(token, endl):
@@ -287,7 +279,7 @@ The operation is performed if the token does not contain '"'
 
 
 def update_in_string(token):
-    if token.find("\'\\\"\'") != -1 and GlobalVar.in_string is False:
+    if token.find("\'\\\"\'") != -1 and not GlobalVar.in_string:
         GlobalVar.in_string = False
         return
     if token.find('"') != -1 and token.find("\'\"\'") == -1:
@@ -307,10 +299,6 @@ Identifies when a conditional instruction contains preprocessor directives.
 @input: cond - context
 @:return True/False
 """
-
-
 def identify_weird_condition(cond):
     regex = re.compile(r"[ \t]*#[ \t]*[a-z]+")
-    if regex.search(cond) is not None:
-        return True
-    return False
+    return regex.search(cond) is not None
