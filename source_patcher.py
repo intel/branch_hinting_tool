@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 ############################################################################
 # Branch Hinting Tool
 #
@@ -21,37 +23,52 @@ import shutil
 import re
 import glob
 
-GCOV_DIR = "GCOVS"
-STATS_FILE = "stats.csv"
+GCOV_DIR = 'GCOVS'
+STATS_FILE = 'stats.csv'
+
 
 def exitWithMsg(message):
-    print(message + "\n")
+    print message + '\n'
     exit(1)
 
-def getCommandLineOptions():
-    parser = argparse.ArgumentParser(description="Source Patcher for Branch Hinting Tool")
 
-    parser.add_argument("targetDir", action="store", help="Target directory")
-    parser.add_argument("--revert", action="store_true", default=False, help="Reverts files to their original state (if possible)")
-    parser.add_argument("--nbFiles", action="store", default = 5, type=int, help="Number of files to patch (files will be patched in order from the hottest to the least hot)")
-    parser.add_argument("--maxPatchedLines", action="store", default = -1, type=int, help="Number of lines to patch (-1 - all) per file. ex: 3 - will patch the 3 hottest lines from each file.")
-    parser.add_argument("--minUsagePerc", action="store", default = 80, type=int, help="Branches that are taken/not taken less than this percentage value are ignored.")
+def getCommandLineOptions():
+    parser = argparse.ArgumentParser(
+        description='Source Patcher for Branch Hinting Tool')
+
+    parser.add_argument('targetDir', action='store', help='Target directory')
+    parser.add_argument(
+        '--revert', action='store_true', default=False,
+        help='Reverts files to their original state (if possible)')
+    parser.add_argument(
+        '--nbFiles', action='store', default=5, type=int,
+        help='Number of files to patch (files will be patched in order ' + \
+             'from the hottest to the least hot)')
+    parser.add_argument(
+        '--maxPatchedLines', action='store', default=-1, type=int,
+        help='Number of lines to patch (-1 - all) per file. ex: 3 - will ' + \
+             'patch the 3 hottest lines from each file.')
+    parser.add_argument(
+        '--minUsagePerc', action='store', default=80, type=int,
+        help='Branches that are taken/not taken less than this percentage ' + \
+             'value are ignored.')
     return parser.parse_args()
+
 
 ###----------------------------------------------------###
 ###---------------------REVERT-------------------------###
 ###----------------------------------------------------###
 
 def revertDirectory(directory):
-    dirListing = glob.glob(directory + "/*")
+    dirListing = glob.glob(directory + '/*')
 
     for item in dirListing:
-        print "Processing " + item
+        print 'Processing ' + item
 
         if os.path.exists(item):
             if os.path.isdir(item):
                 revertDirectory(item)
-            elif item.endswith(".old"):
+            elif item.endswith('.old'):
                 fileName = item[:-4]
                 completeOldFilePath = os.path.join(directory, item)
                 completeFilePath = os.path.join(directory, fileName)
@@ -81,17 +98,22 @@ NB_BRACHES_IDX = 11
 BRANCH_TYPE_IDX = 12
 CODE_IDX = 13
 
+
 class FileEntry:
+
     pass
 
+
 class BranchEntry:
+
     pass
+
 
 def loadAndProcessStats(statsFilePath, options):
     reader = None
     statsEntries = []
     try:
-        statsFile = open(statsFilePath, "rb")
+        statsFile = open(statsFilePath, 'rb')
         reader = csv.reader(statsFile)
 
         try:
@@ -100,7 +122,7 @@ def loadAndProcessStats(statsFilePath, options):
 
             crtLine = 1
 
-            while current != None:
+            while current is not None:
                 nbElements = len(current)
                 if nbElements > CODE_IDX:
                     try:
@@ -110,11 +132,12 @@ def loadAndProcessStats(statsFilePath, options):
                         entry = None
 
                         for crtEntry in statsEntries:
-                            if crtEntry.fileName == fileName and crtEntry.filePath == filePath:
+                            if crtEntry.fileName == fileName \
+                                and crtEntry.filePath == filePath:
                                 entry = crtEntry
                                 break
 
-                        if entry == None:
+                        if entry is None:
                             entry = FileEntry()
                             entry.filePath = filePath
                             entry.fileName = fileName
@@ -126,41 +149,53 @@ def loadAndProcessStats(statsFilePath, options):
                         branchType = current[BRANCH_TYPE_IDX].strip()
                         hintState = current[STATE_IDX].strip()
                         expHint = current[EXP_HINT_IDX].strip()
-                        takenPercent = float(current[TAKEN_PERC_IDX].strip()) * 0.01
+                        takenPercent = 
+                            float(current[TAKEN_PERC_IDX].strip()) * 0.01
                         minTakenPercent = float(options.minUsagePerc) * 0.01
 
-                        if branchType == "IF" and hintState == "MISSING" and expHint != "NONE" and (takenPercent >= minTakenPercent or takenPercent <= 1.0 - minTakenPercent):
+                        if branchType == 'IF' and hintState == 'MISSING' and \
+                           expHint != 'NONE' and (
+                               takenPercent >= minTakenPercent or \
+                               takenPercent <= 1.0 - minTakenPercent):
                             branchEntry = BranchEntry()
 
                             branchEntry.line = int(current[LINE_IDX].strip())
 
                             origLine = current[ORIG_LINE_IDX].strip()
 
-                            if origLine != "":
+                            if origLine:
                                 branchEntry.origLine = int(origLine)
                             else:
                                 branchEntry.origLine = -1
 
                             branchEntry.state = current[STATE_IDX].strip()
-                            branchEntry.crtHint = current[CURRENT_HINT_IDX].strip()
+                            branchEntry.crtHint = \
+                                current[CURRENT_HINT_IDX].strip()
                             branchEntry.expHint = expHint
-                            branchEntry.totalCount = int(current[TOTAL_CNT_IDX].strip())
+                            branchEntry.totalCount = \
+                                int(current[TOTAL_CNT_IDX].strip())
                             branchEntry.takenPercent = takenPercent
-                            branchEntry.takenCount = int(current[TOTAL_CNT_IDX].strip())
-                            branchEntry.notTakenCount = int(current[NOT_TAKEN_CNT_IDX].strip())
-                            branchEntry.nbBranches = int(current[NB_BRACHES_IDX].strip())
+                            branchEntry.takenCount = \
+                                int(current[TOTAL_CNT_IDX].strip())
+                            branchEntry.notTakenCount = \
+                                int(current[NOT_TAKEN_CNT_IDX].strip())
+                            branchEntry.nbBranches = \
+                                int(current[NB_BRACHES_IDX].strip())
 
                             if nbElements > CODE_IDX + 1:
-                                branchEntry.code = ",".join(current[CODE_IDX:nbElements])
+                                branchEntry.code = \
+                                    ','.join(current[CODE_IDX:nbElements])
                             else:
                                 branchEntry.code = current[CODE_IDX]
 
                             entry.totalHits += branchEntry.totalCount
                             entry.branchEntries.append(branchEntry)
                     except:
-                        print("Error parsing line %d: %s, skipped" % (crtLine, str(sys.exc_info()[1])))
+                        print 'Error parsing line %d: %s, skipped' \
+                            % (crtLine, str(sys.exc_info()[1]))
                 else:
-                    print("Warning: incomplete line %d, ignored" % (crtLine))
+                    print 'Warning: incomplete line %d, ignored' \
+                        % crtLine
 
                 current = reader.next()
                 crtLine += 1
@@ -168,29 +203,32 @@ def loadAndProcessStats(statsFilePath, options):
             pass
 
         statsFile.close()
-
     except:
+
         return None
 
     for entry in statsEntries:
-        entry.branchEntries = sorted(entry.branchEntries, key=lambda entry: entry.totalCount, reverse=True)
+        entry.branchEntries = sorted(entry.branchEntries,
+                key=lambda entry: entry.totalCount, reverse=True)
 
-    return sorted(statsEntries, key=lambda entry: entry.totalHits, reverse=True)
+    return sorted(statsEntries, key=lambda entry: entry.totalHits,
+                  reverse=True)
 
 
 def revertFileFromFileEntry(fileEntry):
     filePath = os.path.join(fileEntry.filePath, fileEntry.fileName)
     os.remove(filePath)
-    os.rename(filePath + ".old", filePath)
+    os.rename(filePath + '.old', filePath)
 
 
 def fileHasBeenProcessed(fileEntry):
-    return os.path.exists(os.path.join(fileEntry.filePath, fileEntry.fileName + ".old"))
+    return os.path.exists(os.path.join(fileEntry.filePath,
+                          fileEntry.fileName + '.old'))
 
 
 def backupFile(fileEntry):
     sourceFile = os.path.join(fileEntry.filePath, fileEntry.fileName)
-    targetFile = sourceFile + ".old"
+    targetFile = sourceFile + '.old'
 
     if os.path.exists(targetFile):
         os.remove(targetFile)
@@ -199,25 +237,30 @@ def backupFile(fileEntry):
 
 
 def hintExpression(hint, expression):
-    if hint == "EXPECTED":
-        return "EXPECTED(" + expression + ")"
-    if hint == "UNEXPECTED":
-        return "UNEXPECTED(" + expression + ")"
+    if hint == 'EXPECTED':
+        return 'EXPECTED(' + expression + ')'
+    if hint == 'UNEXPECTED':
+        return 'UNEXPECTED(' + expression + ')'
     return expression
+
 
 ifExpr = re.compile("(if\s*\()")
 singleLineCond = re.compile("(.*\?.*:.*)")
 comment = re.compile("(/\*.*?\*/)")
 
+
 ###Retard'O'Matic(TM) line parser - "it almost works"###
+
 def processLine(line, hint, lineNumber):
 
     if re.match(singleLineCond, line):
-        print("Single line conditionals (expr ? valone : valtwo) not supported - line %d" % (lineNumber))
+        print 'Single line conditionals (expr ? valone : valtwo) not ' + \
+            'supported - line %d' % lineNumber
         return line
 
-    #remove comments
-    line = re.sub(comment, "", line)
+    # remove comments
+
+    line = re.sub(comment, '', line)
 
     lineLen = len(line)
     ifMatch = re.search(ifExpr, line)
@@ -225,24 +268,24 @@ def processLine(line, hint, lineNumber):
     exprStart = -1
     exprEnd = -1
 
-    if ifMatch != None:
+    if ifMatch is not None:
         for idx in range(ifMatch.end(0), lineLen):
-            if line[idx].isspace() == False:
-                    exprStart = idx
-                    break
+            if not line[idx].isspace():
+                exprStart = idx
+                break
     else:
         for idx in range(0, lineLen):
-            if line[idx].isspace() == False and line[idx] != '&' and line[idx] != '|':
-                    exprStart = idx
-                    break
+            if not line[idx].isspace() and line[idx] not in '|&':
+                exprStart = idx
+                break
     brackets = 0
 
     insideQuotes = False
     quotes = []
 
     for idx in range(exprStart, lineLen):
-        if line[idx] == "\"" or line[idx] == "'":
-            if insideQuotes == False:
+        if line[idx] in '"\'':
+            if not insideQuotes:
                 quotes.append(line[idx])
                 insideQuotes = True
             else:
@@ -253,39 +296,42 @@ def processLine(line, hint, lineNumber):
                         insideQuotes = False
                 else:
                     quotes.append(line[idx])
-        if insideQuotes == False:
-            if line[idx] == "(":
+        if not insideQuotes:
+            if line[idx] == '(':
                 brackets += 1
-            elif line[idx] == ")":
+            elif line[idx] == ')':
                 brackets -= 1
 
                 if brackets <= -1:
                     exprEnd = idx - 1
                     break
 
-        if line[idx] == "\n":
+        if line[idx] == '\n':
             exprEnd = idx - 1
             break
 
     if brackets > 0:
         for idx in range(exprStart, exprEnd):
-            if line[idx] == "(":
+            if line[idx] == '(':
                 brackets -= 1
                 if brackets <= 0:
                     exprStart = idx + 1
                     break
 
     if exprStart == -1:
-        print("Failed parsing line %d (could not find expr start)" % (lineNumber))
+        print 'Failed parsing line %d (could not find expr start)' \
+            % lineNumber
         return line
 
     if exprEnd == -1:
-        print("Failed parsing line %d (could not find expr end)" % (lineNumber))
+        print 'Failed parsing line %d (could not find expr end)' \
+            % lineNumber
         return line
 
     expression = line[exprStart:exprEnd + 1].strip()
 
-    line = line[0:exprStart] + hintExpression(hint, expression) + line[exprEnd + 1:lineLen]
+    line = line[0:exprStart] + hintExpression(hint, expression) \
+        + line[exprEnd + 1:lineLen]
 
     return line
 
@@ -299,9 +345,9 @@ def processFile(fileEntry, options):
     try:
         filePath = os.path.join(fileEntry.filePath, fileEntry.fileName)
 
-        print ("Processing " + filePath)
+        print 'Processing ' + filePath
 
-        file = open(filePath, "rt")
+        file = open(filePath, 'rt')
         fileData = file.readlines()
         file.close()
 
@@ -312,53 +358,63 @@ def processFile(fileEntry, options):
 
         for branchEntry in fileEntry.branchEntries[:nbLinesToPatch]:
             currentLine = branchEntry.line - 1
-            #print ("Before : " + fileData[currentLine])
-            print ("Patching line %d with hit count %d taken %.2f%%" % (currentLine, branchEntry.totalCount, branchEntry.takenPercent * 100.0))
-            fileData[currentLine] = processLine(fileData[currentLine], branchEntry.expHint, currentLine)
-            #print ("After : " + fileData[currentLine])
 
-        file = open(filePath, "wt")
+            # print ("Before : " + fileData[currentLine])
+
+            print 'Patching line %d with hit count %d taken %.2f%%' \
+                % (currentLine, branchEntry.totalCount,
+                   branchEntry.takenPercent * 100.0)
+            fileData[currentLine] = processLine(fileData[currentLine],
+                    branchEntry.expHint, currentLine)
+
+            # print ("After : " + fileData[currentLine])
+
+        file = open(filePath, 'wt')
         for line in fileData:
             file.write(line)
         file.close()
 
-        print ("DONE " + filePath)
+        print 'DONE ' + filePath
     except:
-        print("Could not process file: " + filePath + " because " + str(sys.exc_info()[1]))
+        print 'Could not process file: ' + filePath + ' because ' \
+            + str(sys.exc_info()[1])
 
 
 def patchDirectory(workingDir, options):
 
     absGCOVDir = os.path.join(workingDir, GCOV_DIR)
 
-    if os.path.exists(absGCOVDir) == False:
-        exitWithMsg("GCOV directory not found inside the target directory !")
+    if not os.path.exists(absGCOVDir):
+        exitWithMsg('GCOV directory not found inside the target directory !')
 
     absStatsFilePath = os.path.join(absGCOVDir, STATS_FILE)
 
-    if os.path.exists(absStatsFilePath) == False:
-        exitWithMsg("Stats file not found inside the GCOV directory !")
+    if not os.path.exists(absStatsFilePath):
+        exitWithMsg('Stats file not found inside the GCOV directory !')
 
     statsData = loadAndProcessStats(absStatsFilePath, options)
 
-    if statsData == None:
-        exitWithMsg("Failed to process stats file !")
+    if statsData is None:
+        exitWithMsg('Failed to process stats file !')
 
     for entry in statsData[:options.nbFiles]:
         processFile(entry, options)
+
 
 def main():
     options = getCommandLineOptions()
 
     absTargetDir = os.path.abspath(options.targetDir)
 
-    if os.path.exists(absTargetDir) == False:
-        exitWithMsg("Target directory not found !")
+    if not os.path.exists(absTargetDir):
+        exitWithMsg('Target directory not found !')
 
-    if options.revert == True:
+    if options.revert:
         revertDirectory(absTargetDir)
     else:
         patchDirectory(absTargetDir, options)
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     main()
+

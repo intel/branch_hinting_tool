@@ -21,19 +21,13 @@ import generate_gcov
 import constants
 import autogen
 # import oldVersion_generate_gcov
-FLAGS = ""
-target = ""
-
 
 def instrument(target, flags, verbose, build, run):
-    global FLAGS
-    if flags != "" and flags != None:
-        FLAGS = " -d " + flags
     if os.path.isdir(target):
         autogen.start({'path': target}, verbose,build, run)
         # aici trebuie sa adaug generate_gcov
         print "Collect GCOV statistics ..."
-        generate_gcov.generate(target, verbose, build, run)
+        generate_gcov.generate(target, verbose, run)
 
     else:
         command = "gcc -fprofile-arcs -ftest-coverage " \
