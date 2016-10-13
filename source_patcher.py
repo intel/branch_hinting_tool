@@ -209,7 +209,6 @@ ifExpr = re.compile("(if\s*\()")
 singleLineCond = re.compile("(.*\?.*:.*)")
 comment = re.compile("(/\*.*?\*/)")
 
-###Retard'O'Matic(TM) line parser - "it almost works"###
 def processLine(line, hint, lineNumber):
 
     if re.match(singleLineCond, line):

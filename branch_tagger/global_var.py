@@ -17,7 +17,8 @@
 from cStringIO import StringIO
 
 
-class GlobalVar:
+class GlobalVar(object):
+
     def __init__(self):
         pass
 

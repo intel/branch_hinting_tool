@@ -15,21 +15,19 @@
 
 #!/usr/bin/env python
 __author__ = 'Gabriel-Cosmin Samoila'
-import os
-import sys
+
 import constants
-import main
-"""
-This class is used to read .ini file configuration and store
-all rules in Constants class
-"""
 
+class IniReader(object):
+    """
+    This class is used to read .ini file configuration and store
+    all rules in Constants class
+    """
 
-class IniReader():
     def __init__(self, filen):
         self.filename = filen
         self.map = {}
-        self.currentSection = ""
+        self.current_section = ""
         try:
             self.file = open(self.filename, 'r')
         except:
@@ -44,15 +42,14 @@ class IniReader():
             clean_line = line.rstrip("\t \r").strip("\t ")
             if clean_line.startswith("["):
                 # print "New Section:" + clean_line[1:-2]
-                self.currentSection = clean_line[1:-2]
+                self.current_section = clean_line[1:-2]
             elif clean_line.startswith("#"):
-                """
-                do nothing , it is a comment
-                """
+                pass
+
             elif "=" in clean_line:
                 lista = clean_line.split("=")
-                key = self.currentSection + "." \
-                      + lista[0].rstrip("\t \r\n").strip("\t ")
+                key = self.current_section + "." \
+                    + lista[0].rstrip("\t \r\n").strip("\t ")
                 value = lista[1].rstrip("\t \r\n").strip("\t ")
                 self.map[key] = value
 
@@ -75,6 +72,6 @@ class IniReader():
             return None
 
     def to_string(self):
-        result=""
+        result = ""
         for key in self.map:
             result = result + key + "=" + self.map[key] + ","

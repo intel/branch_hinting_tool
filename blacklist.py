@@ -15,15 +15,15 @@
 
 #!/usr/bin/env python
 
-import os
-import sys
 import constants
-"""
+
+
+class BlacklistReader(object):
+    """
     This class is used for reading blacklist configuration file.
     Saves each filename into Constants class.
-"""
+    """
 
-class BlacklistReader():
     def __init__(self, filen):
         self.filename = filen
         try:
@@ -43,7 +43,4 @@ class BlacklistReader():
                 constants.Constants.BLACKLIST.append(line.rstrip(" \n"))
 
     def to_string(self):
-        s = ""
-        for file in constants.Constants.BLACKLIST:
-            s += file
-        return s
+        return ",".join(constants.Constants.BLACKLIST)
