@@ -15,26 +15,24 @@
 
 from state import State
 from global_var import GlobalVar
-from helpers import tag, get_index_list, tag_default_condition, identify_weird_condition
+from helpers import \
+    tag, get_index_list, tag_default_condition, identify_weird_condition
 from cStringIO import StringIO
-
-"""
-All the states of the finite state machine are implemented here.
-The method next_state usually implements:
-	- the updating of the global variable which keeps the tagged text	
-	- transition to the next state
-"""
-
-"""
-State OutContext also checks
-	- whether a preprocessor directive is being traversed
-	- whether a string is being traversed
-and updates the state of the global variables which indicate which 
-condition is being traversed(if, for, while)
-"""
 
 
 class OutContext(State):
+    """
+    All the states of the finite state machine are implemented here.
+    The method next_state usually implements:
+	- the updating of the global variable which keeps the tagged text
+	- transition to the next state
+
+    State OutContext also checks
+	- whether a preprocessor directive is being traversed
+	- whether a string is being traversed
+    and updates the state of the global variables which indicate which
+    condition is being traversed(if, for, while)
+    """
     def run_state(self):
         pass
 
@@ -42,14 +40,16 @@ class OutContext(State):
         token = token[0]
         GlobalVar.modified_text.write(token)
 
-        if token.find('#') != -1 and token.endswith('\n') and (not token.endswith('\\\n')):
+        if token.find('#') != -1 and token.endswith('\n') and \
+           not token.endswith('\\\n'):
             GlobalVar.in_preprocessor = False
             return OutContext()
         if token.find('#') != -1 and (not token.endswith('\n')):
             GlobalVar.in_preprocessor = True
         if token.endswith('\\\n'):
             GlobalVar.in_preprocessor = True
-        if token.endswith('\n') and (not token.endswith('\\\n')) and GlobalVar.in_preprocessor:
+        if token.endswith('\n') and not token.endswith('\\\n') and \
+           GlobalVar.in_preprocessor:
             GlobalVar.in_preprocessor = False
 
         if GlobalVar.in_string:
@@ -70,14 +70,16 @@ class OutContext(State):
             return InCondition()
 
         # one line comment starts
-        if token.find("//") != -1 and GlobalVar.in_string is False and token.find("\n") != -1:
+        if token.find("//") != -1 and not GlobalVar.in_string and \
+           token.find("\n") != -1:
             return OutContext()
-        if token.find("//") != -1 and GlobalVar.in_string is False:
+        if token.find("//") != -1 and not GlobalVar.in_string:
             return InLineComment()
         return OutContext()
 
 
 class InLineComment(State):
+
     def run_state(self):
         pass
 
@@ -91,6 +93,7 @@ class InLineComment(State):
 
 
 class InComment(State):
+
     def run_state(self):
         pass
 
@@ -109,13 +112,13 @@ class InComment(State):
 
 
 class InCondition(State):
+
     def run_state(self):
         pass
 
     def next_state(self, token):
         token = token[0]
         GlobalVar.condition.write(token)
-
 
         if token.find("/*") != -1:
             GlobalVar.in_comment = True
@@ -127,7 +130,9 @@ class InCondition(State):
 
         return InCondition()
 
+
 class InConditionInComment(State):
+
     def run_state(self):
         pass
 
@@ -141,7 +146,9 @@ class InConditionInComment(State):
 
         return InConditionInComment()
 
+
 class InConditionOpenParen(State):
+
     def run_state(self):
         pass
 
@@ -172,11 +179,14 @@ class InConditionOpenParen(State):
             GlobalVar.count_paren = 0
             return InConditionOpenParen()
         # in one line comment
-        if token.find("//") != -1 and GlobalVar.in_string is False and token.find("///") == -1:
+        if token.find("//") != -1 and not GlobalVar.in_string and \
+           token.find("///") == -1:
             GlobalVar.line_comment = True
         return InConditionOpenParen()
 
+
 class InConditionOpenParenInComment(State):
+
     def run_state(self):
         pass
 
@@ -191,15 +201,15 @@ class InConditionOpenParenInComment(State):
         return InConditionOpenParenInComment()
 
 
-"""
-    This class reconstructs the condition with multiple boolean operators, eliminates all line endings and tags all
-boolean operators.
-    Weird conditions(those with unbalanced parenthesis and preprocessor directives such as #ifdef, #ifndef, #else,
-#define, etc) are also checked and tagged with /*weird condition*/.
-"""
-
-
 class InConditionOpenParenCloseParen(State):
+    """
+    This class reconstructs the condition with multiple boolean operators,
+    eliminates all line endings and tags all boolean operators.
+    Weird conditions (those with unbalanced parenthesis and preprocessor
+    directives such as #ifdef, #ifndef, #else,
+    #define, etc) are also checked and tagged with /*weird condition*/.
+    """
+
     def run_state(self):
         pass
 
@@ -214,13 +224,16 @@ class InConditionOpenParenCloseParen(State):
         if identify_weird_condition(GlobalVar.condition.getvalue()):
             GlobalVar.modified_text.write(GlobalVar.condition.getvalue())
             GlobalVar.modified_text.write(token)
-        # when there are one line comments in condition, the conditional instruction is not tagged
+        # when there are one line comments in condition, the conditional
+        # instruction is not tagged
         elif GlobalVar.line_comment:
             GlobalVar.modified_text.write(GlobalVar.condition.getvalue())
             GlobalVar.modified_text.write(token)
             GlobalVar.line_comment = False
-        # when there is a string which contains "/*", the condition is not tagged
-        elif GlobalVar.condition.getvalue().find("/*") != -1 and GlobalVar.condition.getvalue().find('"') != -1:
+        # when there is a string which contains "/*", the condition is not
+        # tagged
+        elif GlobalVar.condition.getvalue().find("/*") != -1 and \
+             GlobalVar.condition.getvalue().find('"') != -1:
             GlobalVar.modified_text.write(GlobalVar.condition.getvalue())
             GlobalVar.modified_text.write(token)
         else:
@@ -232,28 +245,38 @@ class InConditionOpenParenCloseParen(State):
             # simple conditions(without boolean operators ||, &&)
             if len(index_list) == 0:
                 if GlobalVar.if_condition:
-                    GlobalVar.modified_text.write(GlobalVar.condition.getvalue() + "/*" + line_no + ": if branch &&*/")
+                    GlobalVar.modified_text.write(
+                        GlobalVar.condition.getvalue() + "/*" + line_no + \
+                        ": if branch &&*/")
                 elif GlobalVar.while_condition:
-                    GlobalVar.modified_text.write(GlobalVar.condition.getvalue() + "/*" + line_no + ": while branch &&*/")
+                    GlobalVar.modified_text.write(
+                        GlobalVar.condition.getvalue() + "/*" + line_no + \
+                        ": while branch &&*/")
                 elif GlobalVar.for_condition:
-                    GlobalVar.modified_text.write(GlobalVar.condition.getvalue() + "/*" + line_no + ": for branch &&*/")
+                    GlobalVar.modified_text.write(
+                        GlobalVar.condition.getvalue() + "/*" + line_no + \
+                        ": for branch &&*/")
                 GlobalVar.modified_text.write(token)
 
             else:
                 new = tag(string, line_no)
                 GlobalVar.modified_text.write(new)
-                # last simple condition from conditional instruction is tagged by default
+                # last simple condition from conditional instruction is tagged
+                # by default
                 if token.endswith("\\\n"):
                     tag_default_condition(token, "\\\n")
                 elif token.endswith("\n") and (not token.endswith("\\\n")):
                     tag_default_condition(token, '\n')
                 else:
                     if GlobalVar.if_condition:
-                        GlobalVar.modified_text.write(token + "/*" + line_no + ": if branch &&*/")
+                        GlobalVar.modified_text.write(
+                            token + "/*" + line_no + ": if branch &&*/")
                     elif GlobalVar.while_condition:
-                        GlobalVar.modified_text.write(token + "/*" + line_no + ": while branch &&*/")
+                        GlobalVar.modified_text.write(
+                            token + "/*" + line_no + ": while branch &&*/")
                     elif GlobalVar.for_condition:
-                        GlobalVar.modified_text.write(token + "/*" + line_no + ": for branch &&*/")
+                        GlobalVar.modified_text.write(
+                            token + "/*" + line_no + ": for branch &&*/")
 
         # the condition which was being traversed has ended,
         # so the flags indicating the condition type are reset
