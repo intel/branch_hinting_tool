@@ -25,7 +25,7 @@ USAGE:
                         folder
 
 	Optional arguments:
-		-h, --help      show this help message and exit
+		-h, --help            show this help message and exit
   		-l [LOWER]            lower limmit acceptable limit for expected
   		-u [UPPER]            upper limmit acceptable limit for unexpected
   		-F                    apply on folder
