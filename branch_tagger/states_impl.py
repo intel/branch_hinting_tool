@@ -124,7 +124,7 @@ class InCondition(State):
             GlobalVar.in_comment = True
             return InConditionInComment()
 
-        if token == "(" and GlobalVar.in_string is False:
+        if token == "(" and not GlobalVar.in_string:
             GlobalVar.count_paren = 1
             return InConditionOpenParen()
 
@@ -162,11 +162,11 @@ class InConditionOpenParen(State):
             GlobalVar.in_comment = True
             return InConditionOpenParenInComment()
 
-        if token == ")" and GlobalVar.in_string is False:
+        if token == ")" and not GlobalVar.in_string:
             GlobalVar.count_paren -= 1
             if GlobalVar.count_paren == 0:
                 return InConditionOpenParenCloseParen()
-        if token == "(" and GlobalVar.in_string is False:
+        if token == "(" and not GlobalVar.in_string:
             GlobalVar.count_paren += 1
 
         if token == "if":

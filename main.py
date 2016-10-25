@@ -88,8 +88,6 @@ def main():
     # edits and tags branches
     working_folder = constants.Constants.IR.get_rule(
         "Environment.WORKING_FOLDER")
-    if working_folder.endswith("/") == False and os.path.isdir(working_folder):
-        working_folder += "/"
     if not constants.Constants.PATH_TO_SOURCES.endswith("/") and os.path.isdir(
             constants.Constants.PATH_TO_SOURCES):
         constants.Constants.PATH_TO_SOURCES += "/"
@@ -108,7 +106,7 @@ def main():
         os.system(command)
 
         if os.path.isdir(sources):
-            sources += "*"
+            sources += "."
 
         command = "cp -r " + sources + " " + working_folder
         print command

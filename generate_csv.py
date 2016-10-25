@@ -241,14 +241,15 @@ class Parser(object):
         with open(self.path) as lines:
             content = lines.read().splitlines()
 
+        prev_ubc = False
+        current_ubc = content[0].startswith("unconditional") or \
+                      content[0].startswith("branch") or \
+                      content[0].startswith("call")
         for i in range(len(content) - 1):
-
-            if (content[i].startswith("unconditional") or \
-                content[i].startswith("branch") or \
-                content[i].startswith("call")) and \
-                (content[i - 1].startswith("unconditional") == False and \
-                 content[i - 1].startswith("branch") == False and \
-                 content[i - 1].startswith("call") == False):
+            next_ubc = content[i + 1].startswith("unconditional") or \
+                       content[i + 1].startswith("branch") or \
+                       content[i + 1].startswith("call")
+            if current_ubc and not prev_ubc:
                 # print "Test line "+str(i)+":\n"
 
                 # Split the line to find out the line number where the
@@ -266,30 +267,18 @@ class Parser(object):
                 # print content[i]
                 self.sharedcond.add_branch(content[i], 0, 0)
 
-                if content[i + 1].startswith("unconditional") == False and \
-                   content[i + 1].startswith("branch") == False and \
-                   content[i + 1].startswith("call") == False:
+                if not next_ubc:
                     cond = Condition("", 0)
                     cond.copy_condition(self.sharedcond)
                     self.conditii.append(cond)
                     self.sharedcond.reset()
                     # print "End test\n\n"
 
-            elif (content[i].startswith("unconditional") or \
-                  content[i].startswith("branch") or \
-                  content[i].startswith("call")) and \
-                (content[i + 1].startswith("unconditional") or \
-                 content[i + 1].startswith("branch") or \
-                 content[i + 1].startswith("call")):
+            elif current_ubc and next_ubc:
                 self.sharedcond.add_branch(content[i], 0, 0)
                 # print content[i]
 
-            elif (content[i].startswith("unconditional") or \
-                  content[i].startswith("branch") or \
-                  content[i].startswith("call")) and \
-                (content[i + 1].startswith("unconditional") == False and \
-                 content[i + 1].startswith("branch") == False and \
-                 content[i + 1].startswith("call") == False):
+            elif current_ubc and not next_ubc:
                 # print content[i]
                 self.sharedcond.add_branch(content[i], 0, 0)
 
@@ -298,6 +287,9 @@ class Parser(object):
                 self.conditii.append(cond)
                 self.sharedcond.reset()
                 # print "End test\n\n"
+
+            prev_ubc = current_ubc
+            current_ubc = next_ubc
         try:
             lines.close()
         except:
@@ -338,7 +330,7 @@ class Filter(object):
                 if "branch" in branch.get_name():
                     # print "got here"
                     self.branch_conds.append(cond)
-                    return
+                    break
 
     def remove_call(self):
         """
@@ -412,10 +404,8 @@ class Filter(object):
 
             if current_cond.type != "UNKNOWN" and \
                next_cond.type == "UNKNOWN" and \
-               (test_current_cond.endswith("&&") or \
-                test_current_cond.endswith("||") or \
-                test_next_cond.startswith("&&") or \
-                test_next_cond.startswith("||")):
+               (test_current_cond[-2:] in ["&&", "||"] or \
+                test_next_cond[0:2] in ["&&", "||"]):
 
                 next_cond.type = current_cond.type
                 current_cond.set_multicond()
@@ -440,12 +430,10 @@ class Classifier(object):
         for cond in self.all_conds:
             unlikely = constants.Constants.UNLIKELY
             likely = constants.Constants.LIKELY
-            if unlikely != None and \
-               len(unlikely) > 0 and \
+            if unlikely and \
                any(word in cond.get_test() for word in unlikely):
                 cond.expected = constants.Constants.UNEXPECTED
-            elif likely != None and \
-                 len(likely) > 0 and \
+            elif likely and \
                  any(word in cond.get_test() for word in likely):
                 cond.expected = constants.Constants.EXPECTED
             else:
@@ -522,29 +510,25 @@ class Logger(object):
                 lista = cond.get_branches_times_executed()
                 # print lista[0]
                 probability = cond.get_branches()[0].get_probability()
+                line = [cond.line,
+                        None,
+                        None,
+                        None,
+                        cond.expected,
+                        cond.num_branches,
+                        cond.type,
+                        get_line_no(cond.test),
+                        cond.test + "\n"]
                 if "branch ||" in cond.test:
-                    line = str(cond.line) + ", " \
-                        + str(round((100.0 - probability), 2)) + ", " \
-                        + str(lista[1]) + ", " \
-                        + str(lista[0]) + ", " \
-                        + cond.expected + ", " \
-                        + str(cond.num_branches) + ", " \
-                        + cond.type + ", " \
-                        + get_line_no(cond.test) + ", " \
-                        + cond.test + "\n"
-                    # print get_line_no(cond.test)
+                    line[1] = round((100.0 - probability), 2)
+                    line[2] = lista[1]
+                    line[3] = lista[0]
                 else:
-                    line = str(cond.line) + ", " \
-                        + str(round(probability, 2)) + ", " \
-                        + str(lista[0]) + ", " \
-                        + str(lista[1]) + ", " \
-                        + cond.expected + ", " \
-                        + str(cond.num_branches) + ", " \
-                        + cond.type + ", " \
-                        + get_line_no(cond.test) + ", " \
-                        + cond.test + "\n"
-                    # print get_line_no(cond.test)
-                self.csv_file.write(line)
+                    line[1] = round((probability), 2)
+                    line[2] = lista[0]
+                    line[3] = lista[1]
+                # print get_line_no(cond.test)
+                self.csv_file.write(", ".join(str(item) for item in line))
 
         except:
             print "Unexpected file writing error"

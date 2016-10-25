@@ -33,7 +33,7 @@ def apply_on_folder(target, ofile, blacklist):
     for item in dir_ls:
         if os.path.islink(item):
             print item + " is link"
-        elif os.path.isdir(item) and os.path.islink(item) is False:
+        elif os.path.isdir(item) and not os.path.islink(item):
 
             print "    Parsing folder " + os.path.join(target, item) + " ..."
             if item not in blacklist:

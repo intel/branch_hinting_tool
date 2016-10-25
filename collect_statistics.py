@@ -33,28 +33,21 @@ class Condition(object):
     Class used to store each condition reported by gcov.
     """
 
-    def __init__(self, filename, line, tpe, br0, br1, pr):
+    def __init__(self, filename, line, tpe, branch0, branch1, probability):
         self.filename = filename
         self.line = line
-        self.type = tpe
-        self.branch0 = br0
-        self.branch1 = br1
-        self.proc = pr
+        self.type = "EXPECTED" if tpe == 0 else "UNEXPECTED"
+        self.branch0 = branch0
+        self.branch1 = branch1
+        self.proc = probability
         self.state = constants.Constants.MISSING
 
-    def to_string(self):
-        ret = self.filename + " "
-        ret += "line " + str(self.line) + " :\n"
-        if self.type == 0:
-            ret += "\tType : EXPECTED\n"
-        else:
-            ret += "\tType : UNEXPECTED\n"
-        ret += "\tTimes Taken : \n\t\tBranch 0: " \
-             + str(self.branch0) + "\n\t\tBranch 1: " \
-             + str(self.branch1) + "\n"
-        ret += "\tPercent times taken: " \
-             + str(self.proc) + "%\n"
-        return ret
+    def __str__(self):
+        ret = "%s line %s:\n\tType : %s\tTimes Taken : \n\t\t"
+        ret += "Branch 0: %s\n\t\tBranch 1: %s\n\tPercent times taken: %s%%\n"
+        args = (self.filename, self.line, self.type, self.branch0,
+                self.branch1, self.proc)
+        return ret % args
 
 
 class Collector(object):
@@ -73,17 +66,17 @@ class Collector(object):
     def print_wrong_expected(self):
         print "-=====- WRONG EXPECTED -=====-\n"
         for cond in self.wrong_expected:
-            print cond.to_string()
+            print cond
 
     def print_wrong_unexpected(self):
         print "-=====- WRONG UNEXPECTED -=====-\n"
         for cond in self.wrong_unexpected:
-            print cond.to_string()
+            print cond
 
     def print_right_predicted(self):
         print "-=====- RIGHT PREDICTIONS -=====-\n"
         for cond in self.right_predicted:
-            print cond.to_string()
+            print cond
 
     def print_all(self):
         self.print_wrong_expected()
@@ -105,170 +98,86 @@ class Collector(object):
             # print lista
 
             line = int(lista[0])
-            proc = int(float(lista[1]))
             branch0 = int(lista[2])
             branch1 = int(lista[3])
             exp = lista[4]
             num_br = int(lista[5])
-            original_line_no = lista[7].strip().rstrip()
+            original_line_no = lista[7].strip()
             if original_line_no == "0":
                 original_line_no = ' '
             key = fname + ", " + str(line)
             if key in self.map:
                 branch0 += self.map[key][5]
                 branch1 += self.map[key][6]
-                proc = round(branch0 * 100 / (branch0 + branch1), 0)
+                if branch0 + branch1 == 0:
+                    proc = 0
+                else: proc = round(branch0 * 100 / (branch0 + branch1), 0)
+            else:
+                proc = int(float(lista[1]))
             # if "GCOVS" in path:
             #	print path
             path = path.replace("/GCOVS/", "/")
+            mod_line = [None,
+                        exp,
+                        None,
+                        branch0 + branch1,
+                        proc,
+                        branch0,
+                        branch1,
+                        lista[5],
+                        lista[6],
+                        lista[8],
+                        path,
+                        original_line_no]
+            condition = Condition(filename,
+                                  line,
+                                  exp,
+                                  branch0,
+                                  branch1,
+                                  proc)
             if num_br > 2:
-                mod_line = [constants.Constants.OVERFLOW,
-                            exp,
-                            constants.Constants.NONE,
-                            (branch0 + branch1),
-                            proc,
-                            branch0,
-                            branch1,
-                            lista[5],
-                            lista[6],
-                            lista[8],
-                            path,
-                            original_line_no]
+                mod_line[0] = constants.Constants.OVERFLOW
+                mod_line[2] = constants.Constants.NONE
             elif exp == constants.Constants.EXPECTED \
                     and proc < EXPECTED_LIMIT:
-                self.wrong_expected.append(Condition(filename,
-                                                     line,
-                                                     exp,
-                                                     branch0,
-                                                     branch1,
-                                                     proc))
+                self.wrong_expected.append(condition)
                 if proc <= UNEXPECTED_LIMIT:
-                    mod_line = [constants.Constants.WRONG,
-                                exp,
-                                constants.Constants.UNEXPECTED,
-                                (branch0 + branch1),
-                                proc,
-                                branch0,
-                                branch1,
-                                lista[5],
-                                lista[6],
-                                lista[8],
-                                path,
-                                original_line_no]
+                    mod_line[0] = constants.Constants.WRONG
+                    mod_line[2] = constants.Constants.UNEXPECTED
                 else:
-                    mod_line = [constants.Constants.CORRECT,
-                                exp,
-                                constants.Constants.NONE,
-                                (branch0 + branch1),
-                                proc,
-                                branch0,
-                                branch1,
-                                lista[5],
-                                lista[6],
-                                lista[8],
-                                path,
-                                original_line_no]
+                    mod_line[0] = constants.Constants.CORRECT
+                    mod_line[2] = constants.Constants.NONE
 
             elif exp == constants.Constants.UNEXPECTED \
                     and proc > UNEXPECTED_LIMIT:
-                self.wrong_unexpected.append(Condition(filename,
-                                                       line,
-                                                       exp,
-                                                       branch0,
-                                                       branch1,
-                                                       proc))
+                self.wrong_unexpected.append(condition)
                 if proc > EXPECTED_LIMIT:
-                    mod_line = [constants.Constants.WRONG,
-                                exp,
-                                constants.Constants.EXPECTED,
-                                (branch0 + branch1),
-                                proc,
-                                branch0,
-                                branch1,
-                                lista[5],
-                                lista[6],
-                                lista[8],
-                                path,
-                                original_line_no]
+                    mod_line[0] = constants.Constants.WRONG
+                    mod_line[2] = constants.Constants.EXPECTED
                 else:
-                    mod_line = [constants.Constants.CORRECT,
-                                exp,
-                                constants.Constants.NONE,
-                                (branch0 + branch1),
-                                proc,
-                                branch0,
-                                branch1,
-                                lista[5],
-                                lista[6],
-                                lista[8],
-                                path,
-                                original_line_no]
+                    mod_line[0] = constants.Constants.CORRECT
+                    mod_line[2] = constants.Constants.NONE
 
             elif (exp == constants.Constants.EXPECTED
                   and proc > EXPECTED_LIMIT) \
                     or (exp == constants.Constants.UNEXPECTED
                         and proc < UNEXPECTED_LIMIT):
-                self.right_predicted.append(Condition(filename,
-                                                      line,
-                                                      exp,
-                                                      branch0,
-                                                      branch1,
-                                                      proc))
-                mod_line = [constants.Constants.CORRECT,
-                            exp,
-                            exp,
-                            (branch0 + branch1),
-                            proc,
-                            branch0,
-                            branch1,
-                            lista[5],
-                            lista[6],
-                            lista[8],
-                            path,
-                            original_line_no]
+                self.right_predicted.append(condition)
+                mod_line[0] = constants.Constants.CORRECT
+                mod_line[2] = exp
 
             elif exp == constants.Constants.NONE \
                     and proc < EXPECTED_LIMIT \
                     and proc > UNEXPECTED_LIMIT:
-                mod_line = [constants.Constants.CORRECT,
-                            exp,
-                            exp,
-                            (branch0 + branch1),
-                            proc,
-                            branch0,
-                            branch1,
-                            lista[5],
-                            lista[6],
-                            lista[8],
-                            path,
-                            original_line_no]
+                mod_line[0] = constants.Constants.CORRECT
+                mod_line[2] = exp
             else:
                 if proc < UNEXPECTED_LIMIT:
-                    mod_line = [constants.Constants.MISSING,
-                                exp,
-                                constants.Constants.UNEXPECTED,
-                                (branch0 + branch1),
-                                proc,
-                                branch0,
-                                branch1,
-                                lista[5],
-                                lista[6],
-                                lista[8],
-                                path,
-                                original_line_no]
+                    mod_line[0] = constants.Constants.MISSING
+                    mod_line[2] = constants.Constants.UNEXPECTED
                 else:
-                    mod_line = [constants.Constants.MISSING,
-                                exp,
-                                constants.Constants.EXPECTED,
-                                (branch0 + branch1),
-                                proc,
-                                branch0,
-                                branch1,
-                                lista[5],
-                                lista[6],
-                                lista[8],
-                                path,
-                                original_line_no]
+                    mod_line[0] = constants.Constants.MISSING
+                    mod_line[2] = constants.Constants.EXPECTED
 
             self.map[key] = mod_line
 
@@ -289,19 +198,10 @@ class Collector(object):
             "NOT TAKEN, NUM_BRANCHES, BRANCH TYPE, LINE OF CODE\n")
 
         for key in self.map:
-            wfile.write(self.map[key][10] + ", " \
-                        + str(key) + ", " \
-                        + self.map[key][11] + ", " \
-                        + self.map[key][0] + ", " \
-                        + str(self.map[key][1]) + ", " \
-                        + str(self.map[key][2]) + ", " \
-                        + str(self.map[key][3]) + ", " \
-                        + str(self.map[key][4]) + ", " \
-                        + str(self.map[key][5]) + ", " \
-                        + str(self.map[key][6]) + ", " \
-                        + str(self.map[key][7]) + ", " \
-                        + str(self.map[key][8]) + ", " \
-                        + str(self.map[key][9]).split(",")[0] + "\n")
+            value = self.map[key]
+            line = [value[10], key, value[11]] + value[0:9] + [
+                str(value[9]).split(',')[0]]
+            wfile.write(", ".join([str(item) for item in line]) + "\n")
 
 
 def apply_on_folder(target, cstat):
@@ -314,7 +214,9 @@ def apply_on_folder(target, cstat):
     for item in dir_ls:
         if os.path.isdir(item):
             apply_on_folder(target + "/" + item, cstat)
-        elif item.endswith(".c.csv") or item.endswith(".h.csv"):
+        elif item.endswith(".c.csv") or \
+             item.endswith(".h.csv") or \
+             item.endswith(".cpp.csv"):
             cstat.add_file(old_path, item)
 
     os.chdir(old_path)
