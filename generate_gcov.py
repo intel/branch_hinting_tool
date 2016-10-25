@@ -50,19 +50,27 @@ def recursive(target, dest, build_path, verbose):
 
             # go to build path
             os.chdir(build_path)
-            gcov_command = "gcov -bcu -o " + current_path + "/" \
-                           + constants.Constants.IR.get_rule("Config.LIBS") \
-                           + " " + os.path.join(current_path, item)
-            if not verbose:
-                gcov_command += " &> /dev/null"
+            path = None
+            libs = constants.Constants.IR.get_rule("Config.LIBS")
+            if type(libs) == dict and current_path in libs:
+                path = "%s/%s.o" % (libs[current_path], item)
+            elif type(libs) == str:
+                path = os.path.join(current_path, libs)
+                if not os.path.exists(path):
+                    path = None
+            if path:
+                gcov_command = "gcov -bcu -o %s %s" % (
+                    path, os.path.join(current_path, item))
+                if not verbose:
+                    gcov_command += " &> /dev/null"
 
-            os.system(gcov_command)
-            move_command = " mv *.gcov " + os.path.join(dest, item)
+                os.system(gcov_command)
+                move_command = " mv *.gcov " + os.path.join(dest, item)
 
-            if not verbose:
-                move_command += " &> /dev/null"
+                if not verbose:
+                    move_command += " &> /dev/null"
 
-            os.system(move_command)
+                os.system(move_command)
 
             # go back to current path
             os.chdir(current_path)

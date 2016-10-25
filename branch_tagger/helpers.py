@@ -38,17 +38,17 @@ def tokenize_line(orig_line, separators):
     index_open = orig_line.find("\'(\'")
     if index_open != -1 or index_close != -1:
         return false_paren(orig_line, separators)
-    if orig_line.find("#error") != -1 and (
+    if re.match(r'\s*#\s*error', orig_line) and (
             orig_line.find("if") != -1 or \
             orig_line.find("for") != -1 or \
             orig_line.find("while") != -1):
         return [orig_line]
 
     # detect beginning of preprocessor directive
-    regex = re.compile(r"[ \t]*#[ \t]*[a-z]+")
+    regex = re.compile(r"\s*#\s*[a-z]+")
     if regex.match(orig_line) is not None:
         string = orig_line[regex.match(orig_line).end() + 1:]
-        token_list = [orig_line[0: regex.match(orig_line).end() + 1]]
+        token_list = [orig_line[: regex.match(orig_line).end() + 1]]
         return token_list + split(string, separators)
 
     return split(orig_line, separators)
@@ -66,28 +66,32 @@ def split(string, separators):
     @return: a list with the tokens in a string
     """
     i = 0
+    last_separator = None
     token_list = []
-    length = len(string)
-    while i < length:
-        separator = ""
+    while i < len(string):
+        found = False
         for current in separators:
             if current == string[i:i + len(current)]:
-                separator = current
-        if separator != "":
-            token_list += [separator]
-            i += len(separator)
-        else:
-            if token_list == []:
-                token_list = [""]
-            if token_list[-1] in separators:
-                token_list += [""]
-            token_list[-1] += string[i]
+                if current == last_separator and current.isspace():
+                    token_list[-1] += current
+                else:
+                    token_list += [current]
+                    last_separator = current
+                i += len(current)
+                found = True
+                break;
+        if not found:
+            if not token_list or last_separator:
+                token_list += [string[i]]
+            else:
+                token_list[-1] += string[i]
             i += 1
+            last_separator = None
 
     return token_list
 
 
-def __tag__(condition, comment_tag, backslash, line_no):
+def __tag(condition, comment_tag, backslash, line_no):
     """
     Takes a context without line endings and tags it accordingly
 
@@ -97,58 +101,50 @@ def __tag__(condition, comment_tag, backslash, line_no):
 
     @return: tagged_condition - tagged context
     """
-    tagged_condition = ""
     index_list = get_index_list(condition)
     binary_op_or = " ||*/"
     binary_op_and = " &&*/"
 
+    frmt = "%s/*%s: %s%s%s" % ("%s", line_no, comment_tag, "%s", backslash)
     if condition[index_list[0]] == '&':
-        tagged_condition += condition[0: index_list[0]] + "/*" + \
-            line_no + ": " + comment_tag + binary_op_and + backslash
+        tagged_condition = frmt % (condition[:index_list[0]], binary_op_and)
     else:
-        tagged_condition += condition[0: index_list[0]] + "/*" + \
-            line_no + ": " + comment_tag + binary_op_or + backslash
+        tagged_condition = frmt % (condition[:index_list[0]], binary_op_or)
 
     for i in range(0, len(index_list) - 1):
+        substr = condition[index_list[i]: index_list[i + 1]]
         if condition[index_list[i + 1]] == '&':
-            tagged_condition += condition[index_list[i]: index_list[i + 1]] + \
-                "/*" + line_no + ": " + comment_tag + binary_op_and + backslash
+            tagged_condition += frmt % (substr, binary_op_and)
         else:
-            tagged_condition += condition[index_list[i]: index_list[i + 1]] + \
-                "/*" + line_no + ": " + comment_tag + binary_op_or + backslash
-    tagged_condition += condition[index_list[
-        len(index_list) - 1]: len(condition)]
+            tagged_condition += frmt % (substr, binary_op_or)
+    tagged_condition += condition[index_list[len(index_list) - 1]:]
     return tagged_condition
 
 
 def tag(condition, line_no):
+    line_break = "\\\n" if GlobalVar.in_preprocessor else "\n"
+    name = None
     if GlobalVar.if_condition:
-        if GlobalVar.in_preprocessor:
-            return __tag__(condition, "if branch", "\\\n", line_no)
-        else:
-            return __tag__(condition, "if branch", "\n", line_no)
+        name = "if"
     elif GlobalVar.while_condition:
-        if GlobalVar.in_preprocessor:
-            return __tag__(condition, "while branch", "\\\n", line_no)
-        else:
-            return __tag__(condition, "while branch", "\n", line_no)
+        name = "while"
     elif GlobalVar.for_condition:
-        if GlobalVar.in_preprocessor:
-            return __tag__(condition, "for branch", "\\\n", line_no)
-        else:
-            return __tag__(condition, "for branch", "\n", line_no)
+        name = "for"
+    if name:
+        return __tag(condition, "%s branch" % name, line_break, line_no)
 
 
 def tag_default_condition(token, endl):
+    name = None
     if GlobalVar.if_condition:
-        GlobalVar.modified_text.write(
-            token.rstrip(endl) + "/*if branch &&*/" + endl)
+        name = "if"
     elif GlobalVar.while_condition:
-        GlobalVar.modified_text.write(token.rstrip(
-            endl) + "/*while branch &&*/" + endl)
+        name = "while"
     elif GlobalVar.for_condition:
+        name = "for"
+    if name:
         GlobalVar.modified_text.write(
-            token.rstrip(endl) + "/*for branch &&*/" + endl)
+            token.rstrip(endl) + "/*%s branch &&*/%s" % (name, endl))
 
 
 def false_paren(line, separators):
@@ -164,15 +160,16 @@ def false_paren(line, separators):
     index_close_paren = [m.start() for m in re.finditer(r"\'\)\'", line)]
     index_paren = sorted(index_open_paren + index_close_paren)
 
-    split_line = []
-    split_line += split(line[0: index_paren[0]], separators) + \
-        [line[index_paren[0]:index_paren[0] + 3]]
+    split_line = split(line[:index_paren[0]], separators)
+    split_line.append(line[index_paren[0]:index_paren[0] + 3])
+
     for i in range(0, len(index_paren) - 1):
-        split_line += split(
-            line[index_paren[i] + 3:index_paren[i + 1]], separators) + [
-                line[index_paren[i + 1]:index_paren[i + 1] + 3]]
-    split_line += split(
-        line[index_paren[len(index_paren) - 1] + 3:], separators)
+        start = index_paren[i]
+        end = index_paren[i + 1]
+        split_line += split(line[start + 3:end], separators)
+        split_line.append(line[end:end + 3])
+
+    split_line += split(line[index_paren[-1] + 3:], separators)
     return split_line
 
 
@@ -189,7 +186,7 @@ def get_index_list(condition):
 
     bad_quotes = [m.start() for m in re.finditer("\'\"\'", condition)]
     for bad_quote in bad_quotes:
-        if bad_quote != -1 and len(index_list_quotes) > 0:
+        if bad_quote != -1 and index_list_quotes > 0:
             index_list_quotes.remove(bad_quote + 1)
 
     index_list_open_comm = [m.start() for m in re.finditer(r"/\*", condition)]
@@ -200,13 +197,13 @@ def get_index_list(condition):
     index_list_binary_op = sorted(index_list_and + index_list_or)
 
     bad_indexes = []
-    if len(index_list_binary_op) >= 1 and len(index_list_open_comm) != 0:
+    if index_list_binary_op and index_list_open_comm:
         index_list_comm = sorted(index_list_open_comm + index_list_close_comm)
         bad_indexes = get_bad_indexes(index_list_comm, index_list_binary_op)
 
     bad_indexes_quotes = []
 
-    if len(index_list_binary_op) >= 1 and len(index_list_quotes) != 0:
+    if index_list_binary_op and index_list_quotes:
         bad_indexes_quotes = get_bad_indexes_quotes(
             index_list_quotes, index_list_binary_op, condition)
 
@@ -231,10 +228,9 @@ def get_bad_indexes(index_list_comm, index_list_binary_op):
     """
     bad_indexes = []
     for i in xrange(0, len(index_list_comm), 2):
-        for j in xrange(len(index_list_binary_op)):
-            if index_list_binary_op[j] in range(
-                    index_list_comm[i], index_list_comm[i + 1]):
-                bad_indexes.append(index_list_binary_op[j])
+        for op_index in index_list_binary_op:
+            if index_list_comm[i] <= op_index < index_list_comm[i + 1]:
+                bad_indexes.append(op_index)
     return bad_indexes
 
 
@@ -250,25 +246,10 @@ def get_bad_indexes_quotes(index_list_comm, index_list_binary_op, condition):
 
     @return: bad_indexes - list with boolean operators which are inside strings
     """
-    new_index_list_comm = index_list_comm
-    bad_indexes = []
-    escaped_quotes = []
-    for i in xrange(len(index_list_comm)):
-        if count_backslash(condition, index_list_comm[i]) % 2 == 1:
-            escaped_quotes.append(index_list_comm[i])
-
-    for i in xrange(len(escaped_quotes)):
-        new_index_list_comm.remove(escaped_quotes[i])
-
-    if len(new_index_list_comm) > 0:
-        for i in xrange(0, len(new_index_list_comm), 2):
-
-            for j in xrange(len(index_list_binary_op)):
-                if index_list_binary_op[j] in range(
-                        new_index_list_comm[i], new_index_list_comm[i + 1]):
-                    bad_indexes.append(index_list_binary_op[j])
-
-    return bad_indexes
+    for index in index_list_comm[:]:
+        if count_backslash(condition, index) % 2 == 1:
+            index_list_comm.remove(index)
+    return get_bad_indexes(index_list_comm, index_list_binary_op)
 
 
 def count_backslash(token, index):
@@ -299,13 +280,10 @@ def update_in_string(token):
 
     @input: token
     """
-    if token.find("\'\\\"\'") != -1 and GlobalVar.in_string is False:
-        GlobalVar.in_string = False
+    if token.find("\'\\\"\'") != -1 and not GlobalVar.in_string:
         return
     if token.find('"') != -1 and token.find("\'\"\'") == -1:
-
-        list_index_double_quotes = [m.start() for m in re.finditer('"', token)]
-        for i in list_index_double_quotes:
+        for i in [m.start() for m in re.finditer('"', token)]:
             if GlobalVar.in_string:
                 if count_backslash(token, i) % 2 == 0:
                     GlobalVar.in_string = False
@@ -320,7 +298,4 @@ def identify_weird_condition(cond):
     @input: cond - context
     @:return True/False
     """
-    regex = re.compile(r"[ \t]*#[ \t]*[a-z]+")
-    if regex.search(cond) is not None:
-        return True
-    return False
+    return re.compile(r"[ \t]*#[ \t]*[a-z]+").search(cond) is not None

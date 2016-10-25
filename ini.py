@@ -17,6 +17,7 @@
 __author__ = 'Gabriel-Cosmin Samoila'
 
 import constants
+import os
 
 class IniReader(object):
     """
@@ -62,8 +63,19 @@ class IniReader(object):
                     item + ' is not properly set in '
                     + constants.Constants.DEFAULT_INI_FILE + ' file')
 
-        if "Config.LIBS" in self.map:
-            constants.Constants.LIBS_PATH = self.map["Config.LIBS"]
+        if not self.map['Environment.WORKING_FOLDER'][-1] == '/':
+            self.map['Environment.WORKING_FOLDER'] += '/'
+        libs = self.map.get("Config.LIBS", {})
+        if libs and os.path.exists(libs) and not os.path.isdir(libs):
+            working_dir = self.map['Environment.WORKING_FOLDER']
+            libsfile = open(libs)
+            libspaths = {}
+            for line in libsfile:
+                if line[0] == '#':
+                    pass
+                parts = line.strip().split('=')
+                libspaths[working_dir + parts[0]] = working_dir + parts[1]
+            self.map["Config.LIBS"] = libspaths
 
     def get_rule(self, name):
         if name in self.map:
@@ -72,6 +84,4 @@ class IniReader(object):
             return None
 
     def to_string(self):
-        result = ""
-        for key in self.map:
-            result = result + key + "=" + self.map[key] + ","
+        return ",".join(["%s=%s" % (key, self.map[key]) for key in self.map])
