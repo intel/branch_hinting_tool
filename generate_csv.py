@@ -338,7 +338,7 @@ class Filter(object):
                 if "branch" in branch.get_name():
                     # print "got here"
                     self.branch_conds.append(cond)
-                    return
+                    break
 
     def remove_call(self):
         """
